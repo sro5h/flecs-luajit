@@ -21,6 +21,7 @@ if build_machine.system() == 'linux'
 endif
 
 deps += subproject('flecs').get_variable('flecs_dep')
+deps += dependency('luajit', version: '>= 2.0')
 
 args = []
 

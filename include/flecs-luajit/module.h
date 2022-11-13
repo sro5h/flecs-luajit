@@ -19,6 +19,10 @@ extern "C" {
 #endif
 
 FLECS_LUAJIT_API
+void ecs_luajit_ensure_stages(
+                ecs_world_t* world);
+
+FLECS_LUAJIT_API
 void FlecsLuajitImport(
                 ecs_world_t* world);
 
