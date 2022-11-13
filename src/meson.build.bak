@@ -1,0 +1,29 @@
+sources = [
+  'flecs-luajit/module.c',
+]
+
+dependencies = []
+
+if build_machine.system() == 'linux'
+  dependencies += meson.get_compiler('c').find_library('m')
+endif
+
+dependencies += subproject('flecs').get_variable('flecs_dep')
+
+c_args = []
+
+if get_option('default_library') == 'shared'
+  c_args += '-DFLECS_LUAJIT_EXPORTS'
+endif
+
+flecs_luajit_target = library(
+  'flecsluajit',
+  sources,
+  c_args: c_args,
+  dependencies: dependencies,
+)
+
+flecs_luajit_dep = declare_dependency(
+  link_with: flecs_luajit_target,
+  include_directories: include_directories('.'),
+)
