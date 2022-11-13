@@ -7,9 +7,9 @@ ECS_COMPONENT_DECLARE(EcsLuajitHost);
 
 void s_lua_state_init(
                 lua_State* l,
-                int32_t index) {
-
-        if (luaL_dofile(l, "init.lua")) {
+                int32_t index,
+                char const* init_file) {
+        if (luaL_dofile(l, init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
                 lua_pop(l, 1);
@@ -62,7 +62,7 @@ void ecs_luajit_ensure_stages(
                 host->states[i] = luaL_newstate();
                 luaL_openlibs(host->states[i]);
 
-                s_lua_state_init(host->states[i], i);
+                s_lua_state_init(host->states[i], i, "init.lua");
         }
 
         ecs_singleton_modified(world, EcsLuajitHost);
