@@ -9,6 +9,7 @@ void s_lua_state_init(
                 lua_State* l,
                 int32_t index,
                 char const* init_file) {
+        // TODO: Add stack guards
         if (luaL_dofile(l, init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
