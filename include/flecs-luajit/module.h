@@ -7,6 +7,14 @@
 #include <lua.h>
 
 FLECS_LUAJIT_API
+extern ECS_COMPONENT_DECLARE(EcsLuajitConfig);
+
+// TODO: Add component hooks to handle the string data
+typedef struct EcsLuajitConfig {
+        char* init_file;
+} EcsLuajitConfig;
+
+FLECS_LUAJIT_API
 extern ECS_COMPONENT_DECLARE(EcsLuajitHost);
 
 typedef struct EcsLuajitHost {
@@ -39,6 +47,13 @@ FLECS_LUAJIT_API
 ecs_entity_t ecs_luajit_system_init(
                 ecs_world_t* world,
                 ecs_luajit_system_desc_t const* desc);
+
+// TODO: FlecsLuajitConfig would be prettier but that won't work with the current
+// import function that just checks whether an entity already exists and not
+// whether it has the EcsModule tag.
+FLECS_LUAJIT_API
+void FlecsConfigLuajitImport(
+                ecs_world_t* world);
 
 FLECS_LUAJIT_API
 void FlecsLuajitImport(

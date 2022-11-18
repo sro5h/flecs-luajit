@@ -3,6 +3,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
 
 typedef struct ecs_luajit_binding_t {
@@ -18,7 +19,7 @@ void ecs_luajit_binding_fini(
 static void s_lua_state_init(
                 lua_State* l,
                 int32_t index,
-                char const* init_file);
+                EcsLuajitConfig const* config);
 
 static void s_luajit_system_run(
                 ecs_iter_t* iter);
@@ -26,6 +27,7 @@ static void s_luajit_system_run(
 void ecs_luajit_ensure_stages(
                 ecs_world_t* world) {
         int32_t stage_count = ecs_get_stage_count(world);
+        EcsLuajitConfig const* config = ecs_singleton_get(world, EcsLuajitConfig);
         EcsLuajitHost* host = ecs_singleton_get_mut(world, EcsLuajitHost);
 
         if (host->count == stage_count) {
@@ -45,7 +47,7 @@ void ecs_luajit_ensure_stages(
                 host->states[i] = luaL_newstate();
                 luaL_openlibs(host->states[i]);
 
-                s_lua_state_init(host->states[i], i, "init.lua");
+                s_lua_state_init(host->states[i], i, config);
         }
 
         ecs_singleton_modified(world, EcsLuajitHost);
@@ -86,14 +88,31 @@ void flecs_luajit_fini(
         ecs_os_free(host->states);
 }
 
+FLECS_LUAJIT_API
+void FlecsConfigLuajitImport(
+                ecs_world_t* world) {
+        ECS_MODULE(world, FlecsConfigLuajit);
+
+        ecs_set_name_prefix(world, "EcsLuajit");
+
+        ECS_COMPONENT_DEFINE(world, EcsLuajitConfig);
+}
+
 void FlecsLuajitImport(
                 ecs_world_t* world) {
         ECS_MODULE(world, FlecsLuajit);
+        ECS_IMPORT(world, FlecsConfigLuajit);
 
         ecs_set_name_prefix(world, "EcsLuajit");
         ecs_atfini(world, flecs_luajit_fini, NULL);
 
         ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
+
+        if (!ecs_has(world, ecs_id(EcsLuajitConfig), EcsLuajitConfig)) {
+                ecs_singleton_set(world, EcsLuajitConfig, {
+                        .init_file = "init.lua",
+                });
+        }
 
         ecs_singleton_set(world, EcsLuajitHost, { 0 });
         ecs_luajit_ensure_stages(world);
@@ -117,9 +136,9 @@ void ecs_luajit_binding_fini(
 static void s_lua_state_init(
                 lua_State* l,
                 int32_t index,
-                char const* init_file) {
+                EcsLuajitConfig const* config) {
         // TODO: Add stack guards
-        if (luaL_dofile(l, init_file)) {
+        if (luaL_dofile(l, config->init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
                 lua_pop(l, 1);
