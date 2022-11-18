@@ -47,6 +47,10 @@ ecs_entity_t ecs_luajit_system_init(
                 ecs_world_t* world,
                 ecs_luajit_system_desc_t const* desc);
 
+FLECS_LUAJIT_API
+int32_t ecs_luajit_iter_term_count(
+                ecs_iter_t const* iter);
+
 // TODO: FlecsLuajitConfig would be prettier but that won't work with the current
 // import function that just checks whether an entity already exists and not
 // whether it has the EcsModule tag.

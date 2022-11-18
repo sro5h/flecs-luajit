@@ -91,6 +91,12 @@ ecs_entity_t ecs_luajit_system_init(
         });
 }
 
+int32_t ecs_luajit_iter_term_count(
+                ecs_iter_t const* iter) {
+        ecs_filter_t const* filter = ecs_query_get_filter(iter->priv.iter.query.query);
+        return filter->term_count;
+}
+
 void flecs_luajit_fini(
                 ecs_world_t* world,
                 void* context) {
