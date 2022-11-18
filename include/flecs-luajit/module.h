@@ -9,7 +9,6 @@
 FLECS_LUAJIT_API
 extern ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 
-// TODO: Add component hooks to handle the string data
 typedef struct EcsLuajitConfig {
         char* init_file;
 } EcsLuajitConfig;

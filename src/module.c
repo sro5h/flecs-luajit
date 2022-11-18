@@ -24,6 +24,23 @@ static void s_lua_state_init(
 static void s_luajit_system_run(
                 ecs_iter_t* iter);
 
+static void ecs_move(EcsLuajitConfig)(
+                void*,
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_copy(EcsLuajitConfig)(
+                void*,
+                void const*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_dtor(EcsLuajitConfig)(
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
 void ecs_luajit_ensure_stages(
                 ecs_world_t* world) {
         int32_t stage_count = ecs_get_stage_count(world);
@@ -96,6 +113,13 @@ void FlecsConfigLuajitImport(
         ecs_set_name_prefix(world, "EcsLuajit");
 
         ECS_COMPONENT_DEFINE(world, EcsLuajitConfig);
+
+        ecs_set_hooks(world, EcsLuajitConfig, {
+                .ctor = ecs_default_ctor,
+                .move = ecs_move(EcsLuajitConfig),
+                .copy = ecs_copy(EcsLuajitConfig),
+                .dtor = ecs_dtor(EcsLuajitConfig),
+        });
 }
 
 void FlecsLuajitImport(
@@ -189,3 +213,17 @@ static void s_luajit_system_run(
                 lua_pop(l, 1);
         }
 }
+
+static ECS_COPY(EcsLuajitConfig, dst, src, {
+        ecs_os_strset((char**) &dst->init_file, src->init_file);
+})
+
+static ECS_MOVE(EcsLuajitConfig, dst, src, {
+        ecs_os_free(dst->init_file);
+        dst->init_file = src->init_file;
+        src->init_file = NULL;
+})
+
+static ECS_DTOR(EcsLuajitConfig, ptr, {
+        ecs_os_free(ptr->init_file);
+})
