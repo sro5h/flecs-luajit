@@ -21,6 +21,22 @@ typedef struct EcsLuajitHost {
         int32_t count;
 } EcsLuajitHost;
 
+FLECS_LUAJIT_API
+extern ECS_COMPONENT_DECLARE(EcsLuajitSystem);
+
+typedef struct EcsLuajitSystem {
+        char* query_expr;
+        char* callback;
+        ecs_ftime_t interval;
+        int32_t rate;
+        ecs_entity_t tick_source;
+        bool multi_threaded;
+        bool no_readonly;
+} EcsLuajitSystem;
+
+FLECS_LUAJIT_API
+extern ECS_DECLARE(EcsLuajitLoaded);
+
 typedef struct ecs_luajit_system_desc_t {
         ecs_entity_t entity;
         ecs_query_desc_t query;

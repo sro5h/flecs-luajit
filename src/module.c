@@ -5,6 +5,8 @@
 
 ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
+ECS_COMPONENT_DECLARE(EcsLuajitSystem);
+ECS_DECLARE(EcsLuajitLoaded);
 
 typedef struct ecs_luajit_binding_t {
         char* callback;
@@ -24,6 +26,12 @@ static void s_lua_state_init(
 static void s_luajit_system_run(
                 ecs_iter_t* iter);
 
+static void s_luajit_system_on_set(
+                ecs_iter_t* iter);
+
+static void s_luajit_system_on_load(
+                ecs_iter_t* iter);
+
 static void ecs_move(EcsLuajitConfig)(
                 void*,
                 void*,
@@ -37,6 +45,23 @@ static void ecs_copy(EcsLuajitConfig)(
                 ecs_type_info_t const*);
 
 static void ecs_dtor(EcsLuajitConfig)(
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_move(EcsLuajitSystem)(
+                void*,
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_copy(EcsLuajitSystem)(
+                void*,
+                void const*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_dtor(EcsLuajitSystem)(
                 void*,
                 int32_t,
                 ecs_type_info_t const*);
@@ -137,6 +162,33 @@ void FlecsLuajitImport(
         ecs_atfini(world, flecs_luajit_fini, NULL);
 
         ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
+        ECS_COMPONENT_DEFINE(world, EcsLuajitSystem);
+        ECS_ENTITY_DEFINE(world, EcsLuajitLoaded, EcsTag);
+
+        ecs_set_hooks(world, EcsLuajitSystem, {
+                .ctor = ecs_default_ctor,
+                .move = ecs_move(EcsLuajitSystem),
+                .copy = ecs_copy(EcsLuajitSystem),
+                .dtor = ecs_dtor(EcsLuajitSystem),
+        });
+
+        ECS_OBSERVER(world, s_luajit_system_on_set, EcsOnSet,
+                flecs.luajit.System,
+                [filter] (flecs.luajit.Loaded, flecs.luajit.System)
+        );
+
+        ecs_system(world, {
+                .entity = ecs_entity(world, {
+                        .name = "EcsLuajitSystemOnLoad",
+                        .add = { ecs_dependson(EcsOnLoad) },
+                }),
+                .query.filter.expr =
+                        "[in] flecs.luajit.System,"
+                        "!(flecs.luajit.Loaded, flecs.luajit.System)"
+                ,
+                .callback = s_luajit_system_on_load,
+                .no_readonly = true,
+        });
 
         if (!ecs_has(world, ecs_id(EcsLuajitConfig), EcsLuajitConfig)) {
                 ecs_singleton_set(world, EcsLuajitConfig, {
@@ -191,7 +243,7 @@ static void s_lua_state_init(
 
         if (lua_isfunction(l, -2)) { if (lua_pcall(l, 1, 0, 0)) {
                 ecs_warn("ecs_luajit: call on_load_stage on stage %d: %s\n",
-                        index, lua_tostring(l, -1));
+                                index, lua_tostring(l, -1));
                 lua_pop(l, 1);
         } }
 
@@ -220,8 +272,37 @@ static void s_luajit_system_run(
         }
 }
 
+static void s_luajit_system_on_set(
+                ecs_iter_t* iter) {
+        for (int32_t i = 0; i < iter->count; ++ i) {
+                ecs_remove_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
+                                ecs_id(EcsLuajitSystem));
+        }
+}
+
+static void s_luajit_system_on_load(
+                ecs_iter_t* iter) {
+        EcsLuajitSystem const* system = ecs_field(iter, EcsLuajitSystem, 1);
+
+        for (int32_t i = 0; i < iter->count; ++ i) {
+                ecs_luajit_system_init(iter->world, &(ecs_luajit_system_desc_t) {
+                        .entity = iter->entities[i],
+                        .query.filter.expr = system[i].query_expr,
+                        .callback = system[i].callback,
+                        .interval = system[i].interval,
+                        .rate = system[i].rate,
+                        .tick_source = system[i].tick_source,
+                        .multi_threaded = system[i].multi_threaded,
+                        .no_readonly = system[i].no_readonly,
+                });
+
+                ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
+                                ecs_id(EcsLuajitSystem));
+        }
+}
+
 static ECS_COPY(EcsLuajitConfig, dst, src, {
-        ecs_os_strset((char**) &dst->init_file, src->init_file);
+        ecs_os_strset(&dst->init_file, src->init_file);
 })
 
 static ECS_MOVE(EcsLuajitConfig, dst, src, {
@@ -232,4 +313,38 @@ static ECS_MOVE(EcsLuajitConfig, dst, src, {
 
 static ECS_DTOR(EcsLuajitConfig, ptr, {
         ecs_os_free(ptr->init_file);
+})
+
+static ECS_COPY(EcsLuajitSystem, dst, src, {
+        ecs_os_strset(&dst->query_expr, src->query_expr);
+        ecs_os_strset(&dst->callback, src->callback);
+        dst->interval = src->interval;
+        dst->rate = src->rate;
+        dst->tick_source = src->tick_source;
+        dst->multi_threaded = src->multi_threaded;
+        dst->no_readonly = src->no_readonly;
+})
+
+static ECS_MOVE(EcsLuajitSystem, dst, src, {
+        ecs_os_free(dst->query_expr);
+        dst->query_expr = src->query_expr;
+        src->query_expr = NULL;
+        ecs_os_free(dst->callback);
+        dst->callback = src->callback;
+        src->callback = NULL;
+        dst->interval = src->interval;
+        src->interval = 0;
+        dst->rate = src->rate;
+        src->rate = 0;
+        dst->tick_source = src->tick_source;
+        src->tick_source = 0;
+        dst->multi_threaded = src->multi_threaded;
+        src->multi_threaded = 0;
+        dst->no_readonly = src->no_readonly;
+        src->no_readonly = 0;
+})
+
+static ECS_DTOR(EcsLuajitSystem, ptr, {
+        ecs_os_free(ptr->query_expr);
+        ecs_os_free(ptr->callback);
 })

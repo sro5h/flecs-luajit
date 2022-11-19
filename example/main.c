@@ -14,14 +14,20 @@ int main(void) {
 
         ecs_entity_t LuajitSystem = ecs_entity_init(world, &(ecs_entity_desc_t) {
                 .name = "LuajitSystem",
-                .add = { ecs_pair(EcsDependsOn, EcsOnUpdate), EcsOnUpdate },
+                .add = { ecs_dependson(EcsOnUpdate) },
         });
 
-        ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {
+        ecs_set(world, LuajitSystem, EcsLuajitSystem, {
+                .query_expr = "",
+                .callback = "update",
+        });
+
+        // Equivalent alternative
+        /*ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {
                 .entity = LuajitSystem,
                 .query.filter.expr = "",
                 .callback = "update",
-        });
+        });*/
 
         ecs_progress(world, 0);
 
