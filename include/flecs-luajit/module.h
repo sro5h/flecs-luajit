@@ -35,6 +35,13 @@ typedef struct EcsLuajitSystem {
 } EcsLuajitSystem;
 
 FLECS_LUAJIT_API
+extern ECS_COMPONENT_DECLARE(EcsLuajitScript);
+
+typedef struct EcsLuajitScript {
+        char* code;
+} EcsLuajitScript;
+
+FLECS_LUAJIT_API
 extern ECS_DECLARE(EcsLuajitLoaded);
 
 typedef struct ecs_luajit_system_desc_t {
@@ -50,6 +57,11 @@ typedef struct ecs_luajit_system_desc_t {
         bool no_readonly;
 } ecs_luajit_system_desc_t;
 
+typedef struct ecs_luajit_script_run_desc_t {
+        EcsLuajitScript script;
+        int32_t stage_id;
+} ecs_luajit_script_run_desc_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,6 +74,11 @@ FLECS_LUAJIT_API
 ecs_entity_t ecs_luajit_system_init(
                 ecs_world_t* world,
                 ecs_luajit_system_desc_t const* desc);
+
+FLECS_LUAJIT_API
+void ecs_luajit_script_run(
+                ecs_world_t* world,
+                ecs_luajit_script_run_desc_t const* desc);
 
 FLECS_LUAJIT_API
 int32_t ecs_luajit_iter_term_count(

@@ -6,6 +6,7 @@
 ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
 ECS_COMPONENT_DECLARE(EcsLuajitSystem);
+ECS_COMPONENT_DECLARE(EcsLuajitScript);
 ECS_DECLARE(EcsLuajitLoaded);
 
 typedef struct ecs_luajit_binding_t {
@@ -30,6 +31,9 @@ static void s_luajit_system_on_set(
                 ecs_iter_t* iter);
 
 static void s_luajit_system_on_load(
+                ecs_iter_t* iter);
+
+static void s_luajit_script_on_load(
                 ecs_iter_t* iter);
 
 static void ecs_move(EcsLuajitConfig)(
@@ -65,6 +69,40 @@ static void ecs_dtor(EcsLuajitSystem)(
                 void*,
                 int32_t,
                 ecs_type_info_t const*);
+
+static void ecs_move(EcsLuajitScript)(
+                void*,
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_copy(EcsLuajitScript)(
+                void*,
+                void const*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static void ecs_dtor(EcsLuajitScript)(
+                void*,
+                int32_t,
+                ecs_type_info_t const*);
+
+static char const* s_lua_state_init_code =
+        "local ffi = require 'ffi'\n"
+        "ffi.cdef [[\n"
+        "       typedef struct ecs_iter_t ecs_iter_t;\n"
+        "       bool ecs_iter_next(ecs_iter_t*);\n"
+        "       int32_t ecs_luajit_iter_term_count(ecs_iter_t const*);\n"
+        "]]\n"
+        "function ecs_luajit_system_runner(callback, iter)\n"
+        "       iter = ffi.cast('ecs_iter_t*', iter)\n"
+        "       if ffi.C.ecs_luajit_iter_term_count(iter) == 0 then\n"
+        "               callback(iter)\n"
+        "       else while ffi.C.ecs_iter_next(iter) do\n"
+        "               callback(iter)\n"
+        "       end end\n"
+        "end\n"
+;
 
 void ecs_luajit_ensure_stages(
                 ecs_world_t* world) {
@@ -116,6 +154,20 @@ ecs_entity_t ecs_luajit_system_init(
         });
 }
 
+void ecs_luajit_script_run(
+                ecs_world_t* world,
+                ecs_luajit_script_run_desc_t const* desc) {
+        // TODO: Check parameters in `desc`
+        EcsLuajitHost const* host = ecs_singleton_get(world, EcsLuajitHost);
+        lua_State* l = host->states[desc->stage_id];
+
+        if (luaL_dostring(l, desc->script.code)) {
+                ecs_warn("ecs_luajit: run script on stage %d: %s\n",
+                        desc->stage_id, lua_tostring(l, -1));
+                lua_pop(l, 1);
+        }
+}
+
 int32_t ecs_luajit_iter_term_count(
                 ecs_iter_t const* iter) {
         ecs_filter_t const* filter = ecs_query_get_filter(iter->priv.iter.query.query);
@@ -163,6 +215,7 @@ void FlecsLuajitImport(
 
         ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
         ECS_COMPONENT_DEFINE(world, EcsLuajitSystem);
+        ECS_COMPONENT_DEFINE(world, EcsLuajitScript);
         ECS_ENTITY_DEFINE(world, EcsLuajitLoaded, EcsTag);
 
         ecs_set_hooks(world, EcsLuajitSystem, {
@@ -170,6 +223,13 @@ void FlecsLuajitImport(
                 .move = ecs_move(EcsLuajitSystem),
                 .copy = ecs_copy(EcsLuajitSystem),
                 .dtor = ecs_dtor(EcsLuajitSystem),
+        });
+
+        ecs_set_hooks(world, EcsLuajitScript, {
+                .ctor = ecs_default_ctor,
+                .move = ecs_move(EcsLuajitScript),
+                .copy = ecs_copy(EcsLuajitScript),
+                .dtor = ecs_dtor(EcsLuajitScript),
         });
 
         ECS_OBSERVER(world, s_luajit_system_on_set, EcsOnSet,
@@ -220,6 +280,13 @@ static void s_lua_state_init(
                 int32_t index,
                 EcsLuajitConfig const* config) {
         // TODO: Add stack guards
+        if (luaL_dostring(l, s_lua_state_init_code)) {
+                // TODO: Change to ecs_err
+                ecs_warn("ecs_luajit: run init code on stage %d: %s\n",
+                        index, lua_tostring(l, -1));
+                lua_pop(l, 1);
+        }
+
         if (luaL_dofile(l, config->init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
@@ -347,4 +414,18 @@ static ECS_MOVE(EcsLuajitSystem, dst, src, {
 static ECS_DTOR(EcsLuajitSystem, ptr, {
         ecs_os_free(ptr->query_expr);
         ecs_os_free(ptr->callback);
+})
+
+static ECS_COPY(EcsLuajitScript, dst, src, {
+        ecs_os_strset(&dst->code, src->code);
+})
+
+static ECS_MOVE(EcsLuajitScript, dst, src, {
+        ecs_os_free(dst->code);
+        dst->code = src->code;
+        src->code = NULL;
+})
+
+static ECS_DTOR(EcsLuajitScript, ptr, {
+        ecs_os_free(ptr->code);
 })
