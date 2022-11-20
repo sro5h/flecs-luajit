@@ -22,6 +22,13 @@ int main(void) {
                 .callback = "update",
         });
 
+        ecs_set(world, LuajitSystem, EcsLuajitScript, {
+                "function update(iter)\n"
+                "       print('update()')\n"
+                "end\n"
+        });
+
+
         // Equivalent alternative
         /*ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {
                 .entity = LuajitSystem,

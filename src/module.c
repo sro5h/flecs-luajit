@@ -33,6 +33,13 @@ static void s_luajit_system_on_set(
 static void s_luajit_system_on_load(
                 ecs_iter_t* iter);
 
+// TODO: Maybe use struct `ecs_luajit_script_desc_t` with `char const*` as
+// member.
+static void s_luajit_script_run(
+                lua_State* l,
+                int32_t index,
+                EcsLuajitScript const* script);
+
 static void s_luajit_script_on_load(
                 ecs_iter_t* iter);
 
@@ -159,13 +166,7 @@ void ecs_luajit_script_run(
                 ecs_luajit_script_run_desc_t const* desc) {
         // TODO: Check parameters in `desc`
         EcsLuajitHost const* host = ecs_singleton_get(world, EcsLuajitHost);
-        lua_State* l = host->states[desc->stage_id];
-
-        if (luaL_dostring(l, desc->script.code)) {
-                ecs_warn("ecs_luajit: run script on stage %d: %s\n",
-                        desc->stage_id, lua_tostring(l, -1));
-                lua_pop(l, 1);
-        }
+        s_luajit_script_run(host->states[desc->stage_id], desc->stage_id, &desc->script);
 }
 
 int32_t ecs_luajit_iter_term_count(
@@ -250,6 +251,20 @@ void FlecsLuajitImport(
                 .no_readonly = true,
         });
 
+        ecs_system(world, {
+                .entity = ecs_entity(world, {
+                        .name = "EcsLuajitScriptOnLoad",
+                        .add = { ecs_dependson(EcsOnLoad) },
+                }),
+                .query.filter.expr =
+                        "flecs.luajit.Host($),"
+                        "[in] flecs.luajit.Script,"
+                        "!(flecs.luajit.Loaded, flecs.luajit.Script)"
+                ,
+                .callback = s_luajit_script_on_load,
+                .no_readonly = true,
+        });
+
         if (!ecs_has(world, ecs_id(EcsLuajitConfig), EcsLuajitConfig)) {
                 ecs_singleton_set(world, EcsLuajitConfig, {
                         .init_file = "init.lua",
@@ -280,12 +295,9 @@ static void s_lua_state_init(
                 int32_t index,
                 EcsLuajitConfig const* config) {
         // TODO: Add stack guards
-        if (luaL_dostring(l, s_lua_state_init_code)) {
-                // TODO: Change to ecs_err
-                ecs_warn("ecs_luajit: run init code on stage %d: %s\n",
-                        index, lua_tostring(l, -1));
-                lua_pop(l, 1);
-        }
+        s_luajit_script_run(l, index, &(EcsLuajitScript) {
+                .code = (char*) s_lua_state_init_code
+        });
 
         if (luaL_dofile(l, config->init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
@@ -365,6 +377,33 @@ static void s_luajit_system_on_load(
 
                 ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
                                 ecs_id(EcsLuajitSystem));
+        }
+}
+
+// TODO: Maybe return bool to indicate success and failure
+static void s_luajit_script_run(
+                lua_State* l,
+                int32_t index,
+                EcsLuajitScript const* script) {
+        if (luaL_dostring(l, script->code)) {
+                ecs_warn("ecs_luajit: run script on stage %d: %s\n",
+                        index, lua_tostring(l, -1));
+                lua_pop(l, 1);
+        }
+}
+
+static void s_luajit_script_on_load(
+                ecs_iter_t* iter) {
+        EcsLuajitHost const* host = ecs_field(iter, EcsLuajitHost, 1);
+        EcsLuajitScript const* script = ecs_field(iter, EcsLuajitScript, 2);
+
+        for (int32_t i = 0; i < iter->count; ++ i) {
+                for (int32_t stage_id = 0; stage_id < host->count; ++ stage_id) {
+                        s_luajit_script_run(host->states[stage_id], stage_id, &script[i]);
+                }
+
+                ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
+                        ecs_id(EcsLuajitScript));
         }
 }
 
