@@ -53,5 +53,11 @@ int main(void) {
 
         ecs_progress(world, 0);
 
+        ecs_set(world, Bob, EcsLuajitScript, {
+                "print('Hello again from Bob on the next tick')\n"
+        });
+
+        ecs_progress(world, 0);
+
         return ecs_fini(world);
 }

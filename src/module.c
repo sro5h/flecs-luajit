@@ -28,7 +28,7 @@ static void s_lua_state_init(
 static void s_luajit_system_run(
                 ecs_iter_t* iter);
 
-static void s_luajit_system_on_set(
+static void s_luajit_loadable_on_set(
                 ecs_iter_t* iter);
 
 static void s_luajit_system_on_load(
@@ -252,9 +252,10 @@ void FlecsLuajitImport(
                 .dtor = ecs_dtor(EcsLuajitScript),
         });
 
-        ECS_OBSERVER(world, s_luajit_system_on_set, EcsOnSet,
-                flecs.luajit.System,
-                [filter] (flecs.luajit.Loaded, flecs.luajit.System)
+        // TODO: Should the second term be [out] as it is removed?
+        ECS_OBSERVER(world, s_luajit_loadable_on_set, EcsOnSet,
+                [filter] $Loadable,
+                [filter] (flecs.luajit.Loaded, $Loadable)
         );
 
         ecs_system(world, {
@@ -369,11 +370,12 @@ static void s_luajit_system_run(
         }
 }
 
-static void s_luajit_system_on_set(
+static void s_luajit_loadable_on_set(
                 ecs_iter_t* iter) {
+        ecs_id_t loadable_id = ecs_field_id(iter, 1);
+
         for (int32_t i = 0; i < iter->count; ++ i) {
-                ecs_remove_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
-                                ecs_id(EcsLuajitSystem));
+                ecs_remove_pair(iter->world, iter->entities[i], EcsLuajitLoaded, loadable_id);
         }
 }
 
