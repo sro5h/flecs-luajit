@@ -37,9 +37,6 @@ typedef struct EcsLuajitSystem {
 FLECS_LUAJIT_API
 extern ECS_COMPONENT_DECLARE(EcsLuajitScript);
 
-// TODO: Add different script types for scripts that define lua values and thus
-// should be executed on every stage and scripts running flecs functions that
-// should only be called once.
 typedef struct EcsLuajitScript {
         char* code;
 } EcsLuajitScript;
