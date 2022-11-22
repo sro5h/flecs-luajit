@@ -4,6 +4,8 @@
 int main(void) {
         ecs_world_t* world = ecs_init();
 
+        ecs_set_threads(world, 2);
+
         ECS_IMPORT(world, FlecsConfigLuajit);
 
         ecs_singleton_set(world, EcsLuajitConfig, {
@@ -23,9 +25,22 @@ int main(void) {
         });
 
         ecs_set(world, LuajitSystem, EcsLuajitScript, {
+                "print('called system script')\n"
                 "function update(iter)\n"
                 "       print('update()')\n"
                 "end\n"
+        });
+
+        ecs_entity_t Bob = ecs_entity_init(world, &(ecs_entity_desc_t) {
+                .name = "Bob",
+        });
+
+        ecs_set(world, Bob, EcsLuajitScript, {
+                "print('Hello from Bob on main stage')\n"
+        });
+
+        ecs_set_pair(world, Bob, EcsLuajitOnStage, ecs_id(EcsLuajitScript), {
+                .stage_id = 0,
         });
 
 

@@ -45,6 +45,13 @@ typedef struct EcsLuajitScript {
 } EcsLuajitScript;
 
 FLECS_LUAJIT_API
+extern ECS_COMPONENT_DECLARE(EcsLuajitOnStage);
+
+typedef struct EcsLuajitOnStage {
+        int32_t stage_id;
+} EcsLuajitOnStage;
+
+FLECS_LUAJIT_API
 extern ECS_DECLARE(EcsLuajitLoaded);
 
 typedef struct ecs_luajit_system_desc_t {

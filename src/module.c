@@ -7,6 +7,7 @@ ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
 ECS_COMPONENT_DECLARE(EcsLuajitSystem);
 ECS_COMPONENT_DECLARE(EcsLuajitScript);
+ECS_COMPONENT_DECLARE(EcsLuajitOnStage);
 ECS_DECLARE(EcsLuajitLoaded);
 
 typedef struct ecs_luajit_binding_t {
@@ -234,6 +235,7 @@ void FlecsLuajitImport(
         ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
         ECS_COMPONENT_DEFINE(world, EcsLuajitSystem);
         ECS_COMPONENT_DEFINE(world, EcsLuajitScript);
+        ECS_COMPONENT_DEFINE(world, EcsLuajitOnStage);
         ECS_ENTITY_DEFINE(world, EcsLuajitLoaded, EcsTag);
 
         ecs_set_hooks(world, EcsLuajitSystem, {
@@ -276,7 +278,8 @@ void FlecsLuajitImport(
                 .query.filter.expr =
                         "flecs.luajit.Host($),"
                         "[in] flecs.luajit.Script,"
-                        "!(flecs.luajit.Loaded, flecs.luajit.Script)"
+                        "!(flecs.luajit.Loaded, flecs.luajit.Script),"
+                        "?(flecs.luajit.OnStage, flecs.luajit.Script)"
                 ,
                 .callback = s_luajit_script_on_load,
                 .no_readonly = true,
@@ -410,14 +413,22 @@ static void s_luajit_script_on_load(
                 ecs_iter_t* iter) {
         EcsLuajitHost const* host = ecs_field(iter, EcsLuajitHost, 1);
         EcsLuajitScript const* script = ecs_field(iter, EcsLuajitScript, 2);
+        EcsLuajitOnStage const* on_stage = NULL;
+
+        if (ecs_field_is_set(iter, 4)) {
+                 on_stage = ecs_field(iter, EcsLuajitOnStage, 4);
+        }
 
         for (int32_t i = 0; i < iter->count; ++ i) {
-                for (int32_t stage_id = 0; stage_id < host->count; ++ stage_id) {
-                        s_luajit_run(host->states[stage_id], stage_id, script[i].code);
-                }
+                if (on_stage) {
+                        lua_State* l = host->states[on_stage[i].stage_id];
+                        s_luajit_run(l, on_stage[i].stage_id, script[i].code);
+                } else { for (int32_t stage_id = 0; stage_id < host->count; ++ stage_id) {
+                        lua_State* l = host->states[stage_id];
+                        s_luajit_run(l, stage_id, script[i].code);
+                } }
 
-                ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded,
-                        ecs_id(EcsLuajitScript));
+                ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded, ecs_id(EcsLuajitScript));
         }
 }
 
