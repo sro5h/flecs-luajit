@@ -21,14 +21,18 @@ int main(void) {
 
         ecs_set(world, LuajitSystem, EcsLuajitSystem, {
                 .query_expr = "",
-                .callback = "update",
+                //.callback = "LuajitSystem",
         });
 
         ecs_set(world, LuajitSystem, EcsLuajitScript, {
                 "print('called system script')\n"
+                "return function(iter)\n"
+                "       print('LuajitSystem()')\n"
+                "end\n"
+                /* Alternative:
                 "function update(iter)\n"
                 "       print('update()')\n"
-                "end\n"
+                "end\n"*/
         });
 
         ecs_entity_t Bob = ecs_entity_init(world, &(ecs_entity_desc_t) {
@@ -36,7 +40,8 @@ int main(void) {
         });
 
         ecs_set(world, Bob, EcsLuajitScript, {
-                "print('Hello from Bob on main stage')\n"
+                "print('returning Bob\\'s name')\n"
+                "return 'Bobo'\n"
         });
 
         ecs_set_pair(world, Bob, EcsLuajitOnStage, ecs_id(EcsLuajitScript), {
@@ -54,7 +59,7 @@ int main(void) {
         ecs_progress(world, 0);
 
         ecs_set(world, Bob, EcsLuajitScript, {
-                "print('Hello again from Bob on the next tick')\n"
+                "print('Hello again from ' .. Bob .. ' on the next tick')\n"
         });
 
         ecs_progress(world, 0);

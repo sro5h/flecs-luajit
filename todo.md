@@ -1,1 +1,0 @@
-- Assign the returned value of `EcsLuajitScript` to the entity's name
