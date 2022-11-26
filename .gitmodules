@@ -1,3 +1,6 @@
 [submodule "external/flecs"]
 	path = external/flecs
 	url = https://github.com/sandermertens/flecs
+[submodule "external/flecs-luajit-binding"]
+	path = external/flecs-luajit-binding
+	url = https://github.com/sro5h/flecs-luajit-binding.git
