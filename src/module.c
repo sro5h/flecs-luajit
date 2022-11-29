@@ -340,7 +340,7 @@ static void s_lua_state_init(
                                 index, lua_tostring(l, -1));
                 lua_pop(l, 1);
         } } else {
-                lua_pop(l, 1);
+                lua_pop(l, 2);
         }
 
         luaX_stack_guard_epilog(l, 0);
