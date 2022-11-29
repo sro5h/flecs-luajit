@@ -1,4 +1,5 @@
 #include "../include/flecs-luajit/module.h"
+#include "../include/flecs-luajit/util_lua.h"
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -309,7 +310,8 @@ static void s_lua_state_init(
                 lua_State* l,
                 int32_t index,
                 EcsLuajitConfig const* config) {
-        // TODO: Add stack guards
+        luaX_stack_guard_prolog(l);
+
         s_luajit_run(l, index, s_lua_state_init_code, 0);
 
         if (luaL_loadfile(l, config->init_file) || lua_pcall(l, 0, 0, 0)) {
@@ -340,6 +342,8 @@ static void s_lua_state_init(
         } } else {
                 lua_pop(l, 1);
         }
+
+        luaX_stack_guard_epilog(l, 0);
 }
 
 static void s_luajit_system_run(
@@ -350,6 +354,8 @@ static void s_luajit_system_run(
         // TODO: Assert stage_id is in valid range
         lua_State* l = host->states[stage_id];
         ecs_luajit_binding_t const* binding = iter->binding_ctx;
+
+        luaX_stack_guard_prolog(l);
 
         lua_getglobal(l, "ecs_luajit_system_runner");
         lua_getglobal(l, binding->callback);
@@ -362,6 +368,8 @@ static void s_luajit_system_run(
                                 binding->callback, lua_tostring(l, -1));
                 lua_pop(l, 1);
         }
+
+        luaX_stack_guard_epilog(l, 0);
 }
 
 static void s_luajit_loadable_on_set(
@@ -395,18 +403,22 @@ static void s_luajit_system_on_load(
 }
 
 // TODO: Maybe return bool to indicate success and failure
-// TODO: Should pass number of expected arguments
 static bool s_luajit_run(
                 lua_State* l,
                 int32_t stage_id,
                 char const* code,
                 int32_t results) {
+        luaX_stack_guard_prolog(l);
+
         if (luaL_loadstring(l, code) || lua_pcall(l, 0, results, 0)) {
                 ecs_warn("ecs_luajit: run script on stage %d: %s\n", stage_id, lua_tostring(l, -1));
                 lua_pop(l, 1);
+
+                luaX_stack_guard_epilog(l, 0);
                 return false;
         }
 
+        luaX_stack_guard_epilog(l, results);
         return true;
 }
 
@@ -415,6 +427,8 @@ static void s_luajit_run_and_set(
                 int32_t stage_id,
                 char const* code,
                 char const* name) {
+        luaX_stack_guard_prolog(l);
+
         if (s_luajit_run(l, stage_id, code, 1)) {
                 if (!lua_isnil(l, -1) && name) {
                         lua_setglobal(l, name);
@@ -422,6 +436,8 @@ static void s_luajit_run_and_set(
                         lua_pop(l, 1);
                 }
         }
+
+        luaX_stack_guard_epilog(l, 0);
 }
 
 static void s_luajit_script_on_load(
