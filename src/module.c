@@ -312,7 +312,7 @@ static void s_lua_state_init(
         // TODO: Add stack guards
         s_luajit_run(l, index, s_lua_state_init_code, 0);
 
-        if (luaL_dofile(l, config->init_file)) {
+        if (luaL_loadfile(l, config->init_file) || lua_pcall(l, 0, 0, 0)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
                 lua_pop(l, 1);
@@ -325,9 +325,9 @@ static void s_lua_state_init(
                         ecs_warn("ecs_luajit: call on_load: %s\n",
                                 lua_tostring(l, -1));
                         lua_pop(l, 1);
-                } }
-
-                lua_pop(l, 1);
+                } } else {
+                        lua_pop(l, 1);
+                }
         }
 
         lua_getglobal(l, "on_load_stage");
@@ -337,9 +337,9 @@ static void s_lua_state_init(
                 ecs_warn("ecs_luajit: call on_load_stage on stage %d: %s\n",
                                 index, lua_tostring(l, -1));
                 lua_pop(l, 1);
-        } }
-
-        lua_pop(l, 2);
+        } } else {
+                lua_pop(l, 1);
+        }
 }
 
 static void s_luajit_system_run(
