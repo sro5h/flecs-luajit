@@ -29,10 +29,10 @@ int main(void) {
                 "return function(iter)\n"
                 "       print('LuajitSystem()')\n"
                 "end\n"
-                /* Alternative:
-                "function update(iter)\n"
-                "       print('update()')\n"
-                "end\n"*/
+                // Alternative:
+                //"function update(iter)\n"
+                //"       print('update()')\n"
+                //"end\n"
         });
 
         ecs_entity_t Bob = ecs_entity_init(world, &(ecs_entity_desc_t) {
