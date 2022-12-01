@@ -362,7 +362,7 @@ static void s_luajit_run_callbacks(
         lua_getglobal(l, "on_load_stage");
         lua_pushinteger(l, index);
 
-        if (lua_isfunction(l, -1)) { if (lua_pcall(l, 1, 0, 0)) {
+        if (lua_isfunction(l, -2)) { if (lua_pcall(l, 1, 0, 0)) {
                 ecs_warn("ecs_luajit: call on_load_stage on stage %d: %s\n",
                         index, lua_tostring(l, -1));
                 lua_pop(l, 1);
