@@ -20,17 +20,21 @@ int main(void) {
         });
 
         ecs_set(world, LuajitSystem, EcsLuajitSystem, {
-                .query_expr = "",
+                .query_expr = "Position",
                 //.callback = "LuajitSystem",
         });
 
         ecs_set(world, LuajitSystem, EcsLuajitScript, {
                 "print('called system script')\n"
                 "return function(iter)\n"
+                "       for e, p in iter:each() do\n"
+                "               print('[e] ' .. iter:world():name(e))\n"
+                "               print('  {' .. p.x .. ',' .. p.y .. '}')\n"
+                "       end\n"
                 "       print('LuajitSystem()')\n"
                 "end\n"
                 // Alternative:
-                //"function update(iter)\n"
+                //"function LuajitSystem(iter)\n"
                 //"       print('update()')\n"
                 //"end\n"
         });
