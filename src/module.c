@@ -21,10 +21,15 @@ ecs_luajit_binding_t* ecs_luajit_binding_init(
 void ecs_luajit_binding_fini(
                 ecs_luajit_binding_t* self);
 
-static void s_lua_state_init(
+static void s_luajit_run_init_file(
                 lua_State* l,
                 int32_t index,
-                EcsLuajitConfig const* config);
+                char const* init_file,
+                ecs_world_t* world);
+
+static void s_luajit_run_callbacks(
+                lua_State* l,
+                int32_t index);
 
 static void s_luajit_system_run(
                 ecs_iter_t* iter);
@@ -132,10 +137,14 @@ void ecs_luajit_ensure_stages(
         host->count = stage_count;
 
         for (int32_t i = 0; i < host->count; ++ i) {
-                host->states[i] = luaL_newstate();
-                luaL_openlibs(host->states[i]);
+                lua_State* l = luaL_newstate();
+                luaL_openlibs(l);
 
-                s_lua_state_init(host->states[i], i, config);
+                s_luajit_run(l, i, s_lua_state_init_code, 0);
+                s_luajit_run_init_file(l, i, config->init_file, world);
+                s_luajit_run_callbacks(l, i);
+
+                host->states[i] = l;
         }
 
         ecs_singleton_modified(world, EcsLuajitHost);
@@ -306,26 +315,44 @@ void ecs_luajit_binding_fini(
         }
 }
 
-static void s_lua_state_init(
+static void s_luajit_run_init_file(
                 lua_State* l,
                 int32_t index,
-                EcsLuajitConfig const* config) {
+                char const* init_file,
+                ecs_world_t* world) {
         luaX_stack_guard_prolog(l);
 
-        s_luajit_run(l, index, s_lua_state_init_code, 0);
-
-        if (luaL_loadfile(l, config->init_file) || lua_pcall(l, 0, 0, 0)) {
+        if (luaL_loadfile(l, init_file)) {
                 ecs_warn("ecs_luajit: load init file on stage %d: %s\n",
                         index, lua_tostring(l, -1));
                 lua_pop(l, 1);
+
+                luaX_stack_guard_epilog(l, 0);
+                return;
         }
+
+        lua_pushlightuserdata(l, world);
+
+        if (lua_pcall(l, 1, 0, 0)) {
+                ecs_warn("ecs_luajit: run init file on stage %d: %s\n",
+                        index, lua_tostring(l, -1));
+                lua_pop(l, 1);
+        }
+
+        luaX_stack_guard_epilog(l, 0);
+}
+
+static void s_luajit_run_callbacks(
+                lua_State* l,
+                int32_t index) {
+        luaX_stack_guard_prolog(l);
 
         if (index == 0) {
                 lua_getglobal(l, "on_load");
 
                 if (lua_isfunction(l, -1)) { if (lua_pcall(l, 0, 0, 0)) {
-                        ecs_warn("ecs_luajit: call on_load: %s\n",
-                                lua_tostring(l, -1));
+                        ecs_warn("ecs_luajit: call on_load on stage %d: %s\n",
+                                index, lua_tostring(l, -1));
                         lua_pop(l, 1);
                 } } else {
                         lua_pop(l, 1);
@@ -335,9 +362,9 @@ static void s_lua_state_init(
         lua_getglobal(l, "on_load_stage");
         lua_pushinteger(l, index);
 
-        if (lua_isfunction(l, -2)) { if (lua_pcall(l, 1, 0, 0)) {
+        if (lua_isfunction(l, -1)) { if (lua_pcall(l, 1, 0, 0)) {
                 ecs_warn("ecs_luajit: call on_load_stage on stage %d: %s\n",
-                                index, lua_tostring(l, -1));
+                        index, lua_tostring(l, -1));
                 lua_pop(l, 1);
         } } else {
                 lua_pop(l, 2);
