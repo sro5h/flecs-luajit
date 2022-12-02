@@ -14,7 +14,7 @@ int main(void) {
         ECS_IMPORT(world, FlecsConfigLuajit);
 
         ecs_singleton_set(world, EcsLuajitConfig, {
-                .init_code = s_init_code,
+                .init_code = (char*) s_init_code,
                 .init_file = "example/init.lua",
         });
 
