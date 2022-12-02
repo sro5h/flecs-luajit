@@ -272,7 +272,7 @@ void FlecsLuajitImport(
 
         // TODO: Should the second term be [out] as it is removed?
         ECS_OBSERVER(world, s_luajit_loadable_on_set, EcsOnSet,
-                [filter] $Loadable,
+                [in] $Loadable,
                 [filter] (flecs.luajit.Loaded, $Loadable)
         );
 
