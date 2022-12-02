@@ -1,6 +1,11 @@
 #include <flecs-luajit/module.h>
 #include <flecs.h>
 
+static char const* s_init_code =
+        "package.path = package.path .. ';./external/flecs-luajit-binding/?.lua'\n"
+        "require 'flecs' { world = ..., cdef = require 'flecs_cdef' }\n"
+;
+
 int main(void) {
         ecs_world_t* world = ecs_init();
 
@@ -9,7 +14,8 @@ int main(void) {
         ECS_IMPORT(world, FlecsConfigLuajit);
 
         ecs_singleton_set(world, EcsLuajitConfig, {
-                .init_file = "example/init.lua"
+                .init_code = s_init_code,
+                .init_file = "example/init.lua",
         });
 
         ECS_IMPORT(world, FlecsLuajit);

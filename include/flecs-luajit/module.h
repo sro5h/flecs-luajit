@@ -10,6 +10,7 @@ FLECS_LUAJIT_API
 extern ECS_COMPONENT_DECLARE(EcsLuajitConfig);
 
 typedef struct EcsLuajitConfig {
+        char* init_code;
         char* init_file;
 } EcsLuajitConfig;
 

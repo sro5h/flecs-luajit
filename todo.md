@@ -1,6 +1,3 @@
-- Add `config::init_code` to execute some custom lua code before executing
-  `config::init_file`. Use this to set the package path and require `flecs` for
-  the first time. Maybe pass the world to this code aswell.
 - Use `ecs_enable_id` to enable and disable `(Loaded, Loadable)` pair instead
   of adding and removing it
 - Add c function to generate a c definition string for meta components and use

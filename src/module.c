@@ -21,6 +21,12 @@ ecs_luajit_binding_t* ecs_luajit_binding_init(
 void ecs_luajit_binding_fini(
                 ecs_luajit_binding_t* self);
 
+static void s_luajit_run_init_code(
+                lua_State* l,
+                int32_t index,
+                char const* init_code,
+                ecs_world_t* world);
+
 static void s_luajit_run_init_file(
                 lua_State* l,
                 int32_t index,
@@ -141,7 +147,15 @@ void ecs_luajit_ensure_stages(
                 luaL_openlibs(l);
 
                 s_luajit_run(l, i, s_lua_state_init_code, 0);
-                s_luajit_run_init_file(l, i, config->init_file, world);
+
+                if (config->init_code) {
+                        s_luajit_run_init_code(l, i, config->init_code, world);
+                }
+
+                if (config->init_file) {
+                        s_luajit_run_init_file(l, i, config->init_file, world);
+                }
+
                 s_luajit_run_callbacks(l, i);
 
                 host->states[i] = l;
@@ -313,6 +327,33 @@ void ecs_luajit_binding_fini(
                 ecs_os_free(self->callback);
                 ecs_os_free(self);
         }
+}
+
+static void s_luajit_run_init_code(
+                lua_State* l,
+                int32_t index,
+                char const* init_code,
+                ecs_world_t* world) {
+        luaX_stack_guard_prolog(l);
+
+        if (luaL_loadstring(l, init_code)) {
+                ecs_warn("ecs_luajit: load init code on stage %d: %s\n",
+                        index, lua_tostring(l, -1));
+                lua_pop(l, 1);
+
+                luaX_stack_guard_epilog(l, 0);
+                return;
+        }
+
+        lua_pushlightuserdata(l, world);
+
+        if (lua_pcall(l, 1, 0, 0)) {
+                ecs_warn("ecs_luajit: run init code on stage %d: %s\n",
+                        index, lua_tostring(l, -1));
+                lua_pop(l, 1);
+        }
+
+        luaX_stack_guard_epilog(l, 0);
 }
 
 static void s_luajit_run_init_file(
@@ -493,16 +534,21 @@ static void s_luajit_script_on_load(
 }
 
 static ECS_COPY(EcsLuajitConfig, dst, src, {
+        ecs_os_strset(&dst->init_code, src->init_code);
         ecs_os_strset(&dst->init_file, src->init_file);
 })
 
 static ECS_MOVE(EcsLuajitConfig, dst, src, {
+        ecs_os_free(dst->init_code);
+        dst->init_code = src->init_code;
+        src->init_code = NULL;
         ecs_os_free(dst->init_file);
         dst->init_file = src->init_file;
         src->init_file = NULL;
 })
 
 static ECS_DTOR(EcsLuajitConfig, ptr, {
+        ecs_os_free(ptr->init_code);
         ecs_os_free(ptr->init_file);
 })
 

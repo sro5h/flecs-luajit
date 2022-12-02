@@ -1,5 +1,4 @@
-package.path = package.path .. ';./external/flecs-luajit-binding/?.lua'
-local ecs = require 'flecs' { world = ..., cdef = require 'flecs_cdef' }
+local ecs = require 'flecs'
 
 local ffi = require 'ffi'
 ffi.cdef 'typedef struct Position { ecs_float_t x, y; } Position;'
