@@ -20,6 +20,8 @@ int main(void) {
 
         ECS_IMPORT(world, FlecsLuajit);
 
+        ecs_luajit_ensure_stages(world);
+
         ecs_entity_t LuajitSystem = ecs_entity_init(world, &(ecs_entity_desc_t) {
                 .name = "LuajitSystem",
                 .add = { ecs_dependson(EcsOnUpdate) },

@@ -311,7 +311,6 @@ void FlecsLuajitImport(
         }
 
         ecs_singleton_set(world, EcsLuajitHost, { 0 });
-        ecs_luajit_ensure_stages(world);
 }
 
 ecs_luajit_binding_t* ecs_luajit_binding_init(
