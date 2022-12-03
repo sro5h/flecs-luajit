@@ -141,6 +141,8 @@ void ecs_luajit_ensure_stages(
                 lua_State* l = luaL_newstate();
                 luaL_openlibs(l);
 
+                host->states[i] = l;
+
                 s_luajit_run(l, i, s_lua_state_init_code, 0, 0);
 
                 if (config->init_code) {
@@ -151,10 +153,12 @@ void ecs_luajit_ensure_stages(
                 if (config->init_file) {
                         s_luajit_run_init_file(l, i, config->init_file, world);
                 }
+        }
 
-                s_luajit_run_callbacks(l, i);
-
-                host->states[i] = l;
+        // Use separate loop to execute callbacks such that the states are all
+        // initialised. Then functions operating on thos can be called.
+        for (int32_t i = 0; i < host->count; ++ i) {
+                s_luajit_run_callbacks(host->states[i], i);
         }
 
         ecs_singleton_modified(world, EcsLuajitHost);
