@@ -50,6 +50,10 @@ static bool s_luajit_run(
 static void s_luajit_script_on_load(
                 ecs_iter_t* iter);
 
+static char const* s_luajit_identifier(
+                ecs_world_t const* world,
+                ecs_entity_t entity);
+
 static void ecs_move(EcsLuajitConfig)(
                 void*,
                 void*,
@@ -104,9 +108,14 @@ static void ecs_dtor(EcsLuajitScript)(
 static char const* s_lua_state_init_code =
         "local ffi = require 'ffi'\n"
         "ffi.cdef [[\n"
+        "       typedef uint64_t ecs_entity_t;\n"
+        "       typedef struct ecs_world_t ecs_world_t;\n"
         "       typedef struct ecs_iter_t ecs_iter_t;\n"
         "       bool ecs_iter_next(ecs_iter_t*);\n"
+        "       void ecs_luajit_run(ecs_world_t*, char const*);\n"
+        "       void ecs_luajit_run_on_stage(ecs_world_t*, int32_t, char const*);\n"
         "       int32_t ecs_luajit_iter_term_count(ecs_iter_t const*);\n"
+        "       char* ecs_luajit_struct_cdef(ecs_world_t const*, ecs_entity_t);\n"
         "]]\n"
         "function ecs_luajit_system_runner(callback, iter)\n"
         "       iter = ffi.cast('ecs_iter_t*', iter)\n"
@@ -209,6 +218,95 @@ int32_t ecs_luajit_iter_term_count(
                 ecs_iter_t const* iter) {
         ecs_filter_t const* filter = ecs_query_get_filter(iter->priv.iter.query.query);
         return filter->term_count;
+}
+
+char* ecs_luajit_struct_cdef(
+                ecs_world_t const* world,
+                ecs_entity_t type) {
+        EcsMetaTypeSerialized const* serialized = ecs_get(world, type, EcsMetaTypeSerialized);
+
+        if (!serialized) {
+                // TODO: Maybe return empty string instead
+                return NULL;
+        }
+
+        ecs_strbuf_t buf = ECS_STRBUF_INIT;
+
+        char const* identifier = s_luajit_identifier(world, type);
+        ecs_strbuf_append(&buf, "typedef struct %s", identifier);
+
+        for (int32_t i = 0; i < ecs_vector_count(serialized->ops); ++ i) {
+                ecs_meta_type_op_t const* op = ecs_vector_get(
+                        serialized->ops, ecs_meta_type_op_t, i
+                );
+
+                // TODO: EcsOp{Array,Vector,Scope,Enum,Bitmask,Primitive}
+                switch (op->kind) {
+                case EcsOpPush:
+                        ecs_strbuf_appendstr(&buf, "{");
+                        break;
+                case EcsOpPop:
+                        ecs_strbuf_appendstr(&buf, "}");
+                        break;
+                case EcsOpBool:
+                        ecs_strbuf_append(&buf, "ecs_bool_t %s;", op->name);
+                        break;
+                case EcsOpChar:
+                        ecs_strbuf_append(&buf, "ecs_char_t %s;", op->name);
+                        break;
+                case EcsOpByte:
+                        ecs_strbuf_append(&buf, "ecs_byte_t %s;", op->name);
+                        break;
+                case EcsOpU8:
+                        ecs_strbuf_append(&buf, "ecs_u8_t %s;", op->name);
+                        break;
+                case EcsOpU16:
+                        ecs_strbuf_append(&buf, "ecs_u16_t %s;", op->name);
+                        break;
+                case EcsOpU32:
+                        ecs_strbuf_append(&buf, "ecs_u32_t %s;", op->name);
+                        break;
+                case EcsOpU64:
+                        ecs_strbuf_append(&buf, "ecs_u64_t %s;", op->name);
+                        break;
+                case EcsOpI8:
+                        ecs_strbuf_append(&buf, "ecs_i8_t %s;", op->name);
+                        break;
+                case EcsOpI16:
+                        ecs_strbuf_append(&buf, "ecs_i16_t %s;", op->name);
+                        break;
+                case EcsOpI32:
+                        ecs_strbuf_append(&buf, "ecs_i32_t %s;", op->name);
+                        break;
+                case EcsOpI64:
+                        ecs_strbuf_append(&buf, "ecs_i64_t %s;", op->name);
+                        break;
+                case EcsOpF32:
+                        ecs_strbuf_append(&buf, "ecs_f32_t %s;", op->name);
+                        break;
+                case EcsOpF64:
+                        ecs_strbuf_append(&buf, "ecs_f64_t %s;", op->name);
+                        break;
+                case EcsOpUPtr:
+                        ecs_strbuf_append(&buf, "ecs_uptr_t %s;", op->name);
+                        break;
+                case EcsOpIPtr:
+                        ecs_strbuf_append(&buf, "ecs_iptr_t %s;", op->name);
+                        break;
+                case EcsOpString:
+                        ecs_strbuf_append(&buf, "ecs_string_t %s;", op->name);
+                        break;
+                case EcsOpEntity:
+                        ecs_strbuf_append(&buf, "ecs_entity_t %s;", op->name);
+                        break;
+                default:
+                        // TODO: Remove
+                        break;
+                }
+        }
+
+        ecs_strbuf_append(&buf, "%s;", identifier);
+        return ecs_strbuf_get(&buf);
 }
 
 void flecs_luajit_fini(
@@ -515,6 +613,13 @@ static void s_luajit_script_on_load(
 
                 ecs_add_pair(iter->world, iter->entities[i], EcsLuajitLoaded, ecs_id(EcsLuajitScript));
         }
+}
+
+static char const* s_luajit_identifier(
+                ecs_world_t const* world,
+                ecs_entity_t entity) {
+        char const* symbol = ecs_get_symbol(world, entity);
+        return symbol ? symbol : ecs_get_name(world, entity);
 }
 
 static ECS_COPY(EcsLuajitConfig, dst, src, {
