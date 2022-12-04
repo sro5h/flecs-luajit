@@ -2,7 +2,8 @@
 #include <flecs.h>
 
 static char const* s_init_code =
-        "package.path = package.path .. ';./external/flecs-luajit-binding/?.lua'\n"
+        "package.path = package.path .. ';./external/flecs-luajit-binding/?.lua;./example/?.lua'\n"
+        "require 'flecs_mixin'\n"
         "require 'flecs' { world = ..., cdef = require 'flecs_cdef' }\n"
 ;
 
