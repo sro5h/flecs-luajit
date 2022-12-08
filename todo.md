@@ -1,3 +1,4 @@
+- Add init function with config parameter that calls on_load only once
 - Use `ecs_enable_id` to enable and disable `(Loaded, Loadable)` pair instead
   of adding and removing it
 - Add c function to generate a c definition string for meta components and use
