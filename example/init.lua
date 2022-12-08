@@ -1,7 +1,7 @@
 local ecs = require 'flecs'
 
 local ffi = require 'ffi'
-ffi.cdef 'typedef struct Position { ecs_float_t x, y; } Position;'
+ffi.cdef 'typedef struct Position { ecs_f32_t x, y; } Position;'
 
 local function register(struct)
     local cdef = ffi.C.ecs_luajit_struct_cdef(ecs.world, struct)
