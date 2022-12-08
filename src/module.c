@@ -47,6 +47,12 @@ static bool s_luajit_run(
                 int32_t args,
                 int32_t results);
 
+static bool s_luajit_pcall(
+                lua_State* l,
+                int32_t index,
+                int args,
+                int results);
+
 static void s_luajit_script_on_load(
                 ecs_iter_t* iter);
 
@@ -558,17 +564,29 @@ static bool s_luajit_run(
         }
 
         lua_insert(l, -(args + 1)); // Move function below arguments
+        s_luajit_pcall(l, stage_id, args, results);
+
+        luaX_stack_guard_epilog(l, results - args);
+        return true;
+}
+
+static bool s_luajit_pcall(
+                lua_State* l,
+                int32_t index,
+                int args,
+                int results) {
+        luaX_stack_guard_prolog(l);
 
         if (lua_pcall(l, args, results, 0)) {
                 ecs_warn("ecs_luajit: run code on stage %d: %s\n",
-                        stage_id, lua_tostring(l, -1));
+                        index, lua_tostring(l, -1));
                 lua_pop(l, 1);
 
-                luaX_stack_guard_epilog(l, -args);
+                luaX_stack_guard_epilog(l, -(args + 1));
                 return false;
         }
 
-        luaX_stack_guard_epilog(l, results - args);
+        luaX_stack_guard_epilog(l, results - (args + 1));
         return true;
 }
 
