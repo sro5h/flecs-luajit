@@ -8,7 +8,10 @@ ffi.cdef [[
 ]]
 
 flecs.luajit.once(function()
-    world:component('Position')
+    world:component {
+        entity = world:entity { name = 'Position', symbol = 'Position' },
+        ctype = 'Position',
+    }
 end)
 
 flecs.u = {}
