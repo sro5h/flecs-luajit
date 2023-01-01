@@ -10,8 +10,34 @@ project(
   subproject_dir: 'external'
 )
 
+flecs_luajit_binding_srcs = subproject('flecs-luajit-binding').get_variable('srcs')
+
+# Generate resource headers for lua files
+file_to_header = find_program('scripts/file_to_header.py')
+
+gen_srcs = custom_target(
+  'resource-headers',
+  input: [
+    flecs_luajit_binding_srcs,
+    'src/boot.lua',
+  ],
+  output: [
+    'flecs.lua.h',
+    'flecs.cdef.lua.h',
+    'boot.lua.h',
+  ],
+  command: [
+    file_to_header,
+    '-i', '@INPUT@',
+    '-o', '@OUTPUT@',
+    '-d', '@SOURCE_ROOT@/src/res',
+  ],
+)
+
 srcs = [
-  'src/module.c',
+  gen_srcs,
+  'src/module_base.c',
+  'src/host.c',
 ]
 
 deps = []
