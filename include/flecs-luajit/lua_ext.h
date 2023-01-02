@@ -1,5 +1,5 @@
-#ifndef FLECS_LUAJIT_UTIL_LUA_H
-#define FLECS_LUAJIT_UTIL_LUA_H
+#ifndef FLECS_LUAJIT_LUA_EXT_H
+#define FLECS_LUAJIT_LUA_EXT_H
 
 #include <lua.h>
 

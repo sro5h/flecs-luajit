@@ -1,5 +1,5 @@
 #include "../include/flecs-luajit/host.h"
-#include "../include/flecs-luajit/util_lua.h"
+#include "../include/flecs-luajit/lua_ext.h"
 
 #include <lualib.h>
 #include <lauxlib.h>

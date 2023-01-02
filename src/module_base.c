@@ -1,5 +1,5 @@
 #include "../include/flecs-luajit/module_base.h"
-#include "../include/flecs-luajit/util_lua.h"
+#include "../include/flecs-luajit/lua_ext.h"
 
 #include "res/flecs.lua.h"
 #include "res/flecs.cdef.lua.h"
