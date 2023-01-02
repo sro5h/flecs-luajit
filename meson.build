@@ -36,8 +36,9 @@ gen_srcs = custom_target(
 
 srcs = [
   gen_srcs,
-  'src/module_base.c',
+  'src/flecs_ext.c',
   'src/host.c',
+  'src/module_base.c',
 ]
 
 deps = []

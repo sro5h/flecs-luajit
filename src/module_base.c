@@ -14,6 +14,8 @@
 
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
 
+static char const* s_key_system_run = "flecs.luajit.system_run";
+
 static ECS_MOVE(EcsLuajitHost, dst, src, {
     ecs_luajit_host_fini(dst);
     dst->states = src->states;
@@ -96,6 +98,23 @@ static void s_init_module_flecs(
     luaX_stack_guard_epilog(l, 0);
 }
 
+void s_init_registry_refs(
+        EcsLuajitHost const* host,
+        int32_t stage_id) {
+    lua_State* l = ecs_luajit_host_at(host, stage_id);
+    luaX_stack_guard_prolog(l);
+
+    lua_getglobal(l, "package");
+    lua_getfield(l, -1, "loaded");
+    lua_getfield(l, -1, "flecs");
+    lua_getfield(l, -1, "luajit");
+    lua_getfield(l, -1, "system_run");
+    lua_setfield(l, LUA_REGISTRYINDEX, s_key_system_run);
+    lua_pop(l, 4);
+
+    luaX_stack_guard_epilog(l, 0);
+}
+
 void ecs_luajit_init(
         ecs_world_t* world) {
     ecs_assert(world != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -112,6 +131,8 @@ void ecs_luajit_init(
             .stage_id = i,
             .script = { g_flecs_file_boot_lua },
         });
+
+        s_init_registry_refs(host, i);
     }
 
     ecs_singleton_modified(world, EcsLuajitHost);
@@ -139,6 +160,61 @@ bool ecs_luajit_run(
     } }
 
     return result;
+}
+
+static void s_system_run(
+        ecs_iter_t* iter) {
+    EcsLuajitHost const* host = ecs_singleton_get(iter->world, EcsLuajitHost);
+
+    lua_State* l = ecs_luajit_host_at(host, ecs_get_stage_id(iter->world));
+    char const* callback = iter->binding_ctx;
+
+    luaX_stack_guard_prolog(l);
+
+    lua_getfield(l, LUA_REGISTRYINDEX, s_key_system_run);
+    lua_pushstring(l, callback);
+    // Push as lightuserdata, use `ffi.cast` to obtain typed pointer
+    // https://www.freelists.org/post/luajit/Transferring-cdata-between-states,7
+    lua_pushlightuserdata(l, iter);
+
+    if (lua_pcall(l, 2, 0, 0)) {
+        ecs_err("run luajit system %s: %s", callback, lua_tostring(l, -1));
+        lua_pop(l, 1);
+    }
+
+    luaX_stack_guard_epilog(l, 0);
+}
+
+static void s_callback_free(
+        void* callback) {
+    ecs_os_free(callback);
+}
+
+ecs_entity_t ecs_luajit_system_init(
+        ecs_world_t* world,
+        ecs_luajit_system_desc_t const* desc) {
+    ecs_assert(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(desc != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    if (!desc->callback && !desc->entity) {
+        return 0;
+    }
+
+    char const* callback = desc->callback;
+
+    if (!callback) {
+        callback = ecs_get_name(world, desc->entity);
+    }
+
+    return ecs_system(world, {
+        .entity = desc->entity,
+        .query = desc->query,
+        .run = s_system_run,
+        .binding_ctx = ecs_os_strdup(callback),
+        .binding_ctx_free = s_callback_free,
+        .multi_threaded = desc->multi_threaded,
+        .no_readonly = desc->no_readonly,
+    });
 }
 
 void FlecsLuajitConfigImport(

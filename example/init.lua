@@ -27,4 +27,8 @@ print(world:name(e) .. ' on stage ' .. flecs.luajit.stage_id)
 local p = world:get(e, flecs.u.Position)
 print('  {' .. p.x .. ',' .. p.y .. '}')
 
+function HelloWorld(iter)
+    print('Hello world :)')
+end
+
 print('init.lua executed')

@@ -17,6 +17,19 @@ typedef struct ecs_luajit_run_desc_t {
     bool once;
 } ecs_luajit_run_desc_t;
 
+typedef struct ecs_luajit_system_desc_t {
+    ecs_entity_t entity;
+    ecs_query_desc_t query;
+    char const* callback;
+    void* ctx;
+    ecs_ctx_free_t ctx_free;
+    ecs_ftime_t interval;
+    int32_t rate;
+    ecs_entity_t tick_source;
+    bool multi_threaded;
+    bool no_readonly;
+} ecs_luajit_system_desc_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,6 +42,11 @@ FLECS_LUAJIT_API
 bool ecs_luajit_run(
         ecs_world_t* world,
         ecs_luajit_run_desc_t const* desc);
+
+FLECS_LUAJIT_API
+ecs_entity_t ecs_luajit_system_init(
+        ecs_world_t* world,
+        ecs_luajit_system_desc_t const* desc);
 
 // TODO: FlecsLuajitConfig would be prettier but that won't work with the current
 // import function that just checks whether an entity already exists and not

@@ -12,6 +12,14 @@ int main(void) {
             .script = { "example/init.lua", .is_file = true },
         });
 
+        ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {
+            .entity = ecs_entity(world, {
+                .name = "HelloWorld",
+                .add = { ecs_dependson(EcsOnUpdate) },
+            }),
+            .query.filter.expr = "",
+        });
+
         ecs_progress(world, 0);
 
         return ecs_fini(world);
