@@ -12,20 +12,35 @@ flecs.luajit.once(function()
         entity = world:entity { name = 'Position', symbol = 'Position' },
         ctype = 'Position',
     }
+
+    world:struct {
+        entity = world:entity { name = 'Velocity' },
+        members = {
+            { name = 'x', type = flecs.g.f32 },
+            { name = 'y', type = flecs.g.f32 },
+        },
+    }
 end)
 
 flecs.u = {}
 flecs.u.Position = world:lookup('Position')
+flecs.u.Velocity = world:lookup('Velocity')
+
+world:cdef(flecs.u.Velocity)
 
 flecs.luajit.once(function()
     local e = world:entity { name = 'Bob' }
     world:set(e, flecs.u.Position, { 10, 20 })
+    world:set(e, flecs.u.Velocity, { 42, 37 })
 end)
 
 local e = world:lookup('Bob')
-print(world:name(e) .. ' on stage ' .. flecs.luajit.stage_id)
 local p = world:get(e, flecs.u.Position)
-print('  {' .. p.x .. ',' .. p.y .. '}')
+local v = world:get(e, flecs.u.Velocity)
+
+print(world:name(e) .. ' on stage ' .. flecs.luajit.stage_id)
+print('  Position = {' .. p.x .. ',' .. p.y .. '}')
+print('  Velocity = {' .. v.x .. ',' .. v.y .. '}')
 
 function HelloWorld(iter)
     print('Hello world :)')

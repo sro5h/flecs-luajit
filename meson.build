@@ -20,11 +20,13 @@ gen_srcs = custom_target(
   input: [
     flecs_luajit_binding_srcs,
     'src/boot.lua',
+    'src/glue.lua',
   ],
   output: [
     'flecs.lua.h',
     'flecs.cdef.lua.h',
     'boot.lua.h',
+    'glue.lua.h',
   ],
   command: [
     file_to_header,

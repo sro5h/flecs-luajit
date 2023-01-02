@@ -4,6 +4,7 @@
 #include "res/flecs.lua.h"
 #include "res/flecs.cdef.lua.h"
 #include "res/boot.lua.h"
+#include "res/glue.lua.h"
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -130,6 +131,11 @@ void ecs_luajit_init(
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
             .stage_id = i,
             .script = { g_flecs_file_boot_lua },
+        });
+
+        ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
+            .stage_id = i,
+            .script = { g_flecs_file_glue_lua },
         });
 
         s_init_registry_refs(host, i);

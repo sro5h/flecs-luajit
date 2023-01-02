@@ -15,17 +15,18 @@ end
 
 ffi.cdef [[
     int32_t ecs_ext_iter_term_count(struct ecs_iter_t const*);
+    int16_t ecs_ext_vector_offset(ecs_size_t alignment);
 ]]
+
+local clib = ffi.C
 
 function flecs.luajit.system_run(fn_name, iter)
     local fn = _G[fn_name]
     iter = ffi.cast('ecs_iter_t*', iter)
 
-    if ffi.C.ecs_ext_iter_term_count(iter) == 0 then
+    if clib.ecs_ext_iter_term_count(iter) == 0 then
         fn(iter)
-    else while ffi.C.ecs_iter_next(iter) do
+    else while clib.ecs_iter_next(iter) do
         fn(iter)
     end end
 end
-
-flecs:bind_metatypes()
