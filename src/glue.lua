@@ -3,6 +3,11 @@ local ffi = require 'ffi'
 
 local clib = ffi.C
 
+function flecs.World:system(descOrNil)
+    local desc = descOrNil or {}
+    return clib.ecs_luajit_system_init(self, ffi.new('ecs_luajit_system_desc_t', desc))
+end
+
 function flecs.World:cdef(entity)
     local identifier = self:identifier(entity)
 

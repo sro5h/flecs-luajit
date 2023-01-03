@@ -46,4 +46,18 @@ function HelloWorld(iter)
     print('Hello world :)')
 end
 
+flecs.luajit.once(function()
+    world:system {
+        entity = world:entity {
+            name = 'HelloWorld',
+            add = { flecs.aux.id(flecs.g.DependsOn, flecs.g.OnUpdate) },
+        },
+        query = { filter = { expr = "" } },
+    }
+end)
+
+function HelloAgain(iter)
+    print('Hello again :p')
+end
+
 print('init.lua executed')

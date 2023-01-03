@@ -14,7 +14,7 @@ int main(void) {
 
         ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {
             .entity = ecs_entity(world, {
-                .name = "HelloWorld",
+                .name = "HelloAgain",
                 .add = { ecs_dependson(EcsOnUpdate) },
             }),
             .query.filter.expr = "",
