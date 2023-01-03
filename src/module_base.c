@@ -2,8 +2,8 @@
 #include "../include/flecs-luajit/lua_ext.h"
 
 #include "res/flecs.lua.h"
-#include "res/flecs.cdef.lua.h"
 #include "res/boot.lua.h"
+#include "res/cdef.lua.h"
 #include "res/glue.lua.h"
 
 #include <lualib.h>
@@ -51,28 +51,14 @@ static void s_init_module_flecs_luajit(
     lua_pushlightuserdata(l, world);
     lua_setfield(l, -2, "world");
 
-    lua_setfield(l, -2, "flecs.luajit");
-    lua_pop(l, 2);
-
-    luaX_stack_guard_epilog(l, 0);
-}
-
-static void s_init_module_flecs_cdef(
-        EcsLuajitHost const* host,
-        int32_t stage_id) {
-    lua_State* l = ecs_luajit_host_at(host, stage_id);
-    luaX_stack_guard_prolog(l);
-
-    lua_getglobal(l, "package");
-    lua_getfield(l, -1, "loaded");
-
     ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
         .stage_id = stage_id,
-        .script = { g_flecs_file_flecs_cdef_lua },
+        .script = { g_flecs_file_cdef_lua },
         .results = 1,
     });
+    lua_setfield(l, -2, "cdef");
 
-    lua_setfield(l, -2, "flecs.cdef");
+    lua_setfield(l, -2, "flecs.luajit");
     lua_pop(l, 2);
 
     luaX_stack_guard_epilog(l, 0);
@@ -125,7 +111,6 @@ void ecs_luajit_init(
 
     for (int32_t i = 0; i < ecs_luajit_host_count(host); ++ i) {
         s_init_module_flecs_luajit(host, i, world);
-        s_init_module_flecs_cdef(host, i);
         s_init_module_flecs(host, i);
 
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {

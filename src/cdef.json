@@ -1,0 +1,21 @@
+{
+    "files": [
+        {
+            "path": "../include/flecs-luajit/module_base.h",
+            "include_dirs": [ "../external/flecs" ],
+            "symbols": [
+                { "name": "ecs_luajit_system_desc_t", "kind": "Typedef" },
+                { "name": "ecs_luajit_system_desc_t", "kind": "Default" },
+                { "name": "ecs_luajit_system_init", "kind": "Default" }
+            ]
+        },
+        {
+            "path": "../include/flecs-luajit/flecs_ext.h",
+            "include_dirs": [ "../external/flecs" ],
+            "symbols": [
+                { "name": "ecs_ext_iter_term_count", "kind": "Default" },
+                { "name": "ecs_ext_vector_offset", "kind": "Default" }
+            ]
+        }
+    ]
+}
