@@ -13,7 +13,7 @@ project(
 flecs_luajit_binding_srcs = subproject('flecs-luajit-binding').get_variable('srcs_flecs_lua')
 
 # Generate resource headers for lua files
-file_to_header = find_program('scripts/file_to_header.py')
+generate_file_header = find_program('scripts/generate_file_header.py')
 
 gen_srcs = custom_target(
   'resource-headers',
@@ -30,7 +30,7 @@ gen_srcs = custom_target(
     'glue.lua.h',
   ],
   command: [
-    file_to_header,
+    generate_file_header,
     '-i', '@INPUT@',
     '-o', '@OUTPUT@',
     '-d', '@SOURCE_ROOT@/src/res',
