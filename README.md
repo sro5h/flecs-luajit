@@ -37,12 +37,10 @@ ffi.cdef('typedef struct { ecs_f32_t x, y; } Position, Velocity;')
 
 local Position = world:component {
     entity = world:entity { name = 'Position', symbol = 'Position' },
-    ctype = 'Position',
 }
 
 local Velocity = world:component {
     entity = world:entity { name = 'Velocity', symbol = 'Velocity' },
-    ctype = 'Velocity',
 }
 
 local e = world:entity { name = 'Bob' }
