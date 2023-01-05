@@ -277,24 +277,24 @@ ecs_entity_t ecs_luajit_observer_init(
 
 void FlecsLuajitConfigImport(
                 ecs_world_t* world) {
-        ECS_MODULE(world, FlecsLuajitConfig);
+    ECS_MODULE(world, FlecsLuajitConfig);
 
-        ecs_set_name_prefix(world, "EcsLuajit");
+    ecs_set_name_prefix(world, "EcsLuajit");
 }
 
 void FlecsLuajitBaseImport(
                 ecs_world_t* world) {
-        ECS_MODULE(world, FlecsLuajitBase);
-        ECS_IMPORT(world, FlecsLuajitConfig);
+    ECS_MODULE(world, FlecsLuajitBase);
+    ECS_IMPORT(world, FlecsLuajitConfig);
 
-        ecs_set_name_prefix(world, "EcsLuajit");
+    ecs_set_name_prefix(world, "EcsLuajit");
 
-        ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
+    ECS_COMPONENT_DEFINE(world, EcsLuajitHost);
 
-        ecs_set_hooks(world, EcsLuajitHost, {
-            .ctor = ecs_default_ctor,
-            .move = ecs_move(EcsLuajitHost),
-            .copy = ecs_copy(EcsLuajitHost),
-            .dtor = ecs_dtor(EcsLuajitHost),
-        });
+    ecs_set_hooks(world, EcsLuajitHost, {
+        .ctor = ecs_default_ctor,
+        .move = ecs_move(EcsLuajitHost),
+        .copy = ecs_copy(EcsLuajitHost),
+        .dtor = ecs_dtor(EcsLuajitHost),
+    });
 }

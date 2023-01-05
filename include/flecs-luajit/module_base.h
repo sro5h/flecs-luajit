@@ -70,11 +70,11 @@ ecs_entity_t ecs_luajit_observer_init(
 // whether it has the EcsModule tag.
 FLECS_LUAJIT_API
 void FlecsLuajitConfigImport(
-                ecs_world_t* world);
+        ecs_world_t* world);
 
 FLECS_LUAJIT_API
 void FlecsLuajitBaseImport(
-                ecs_world_t* world);
+        ecs_world_t* world);
 
 #ifdef __cplusplus
 }

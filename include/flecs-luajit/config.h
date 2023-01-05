@@ -3,11 +3,11 @@
 
 // TODO: Make portable
 #if defined(FLECS_LUAJIT_EXPORTS)
-#       define FLECS_LUAJIT_API __attribute__((visibility("default")))
+#   define FLECS_LUAJIT_API __attribute__((visibility("default")))
 #elif defined(FLECS_LUAJIT_IMPORTS)
-#       define FLECS_LUAJIT_API __attribute__((visibility("default")))
+#   define FLECS_LUAJIT_API __attribute__((visibility("default")))
 #else
-#       define FLECS_LUAJIT_API
+#   define FLECS_LUAJIT_API
 #endif
 
 #endif
