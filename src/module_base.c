@@ -201,8 +201,13 @@ ecs_entity_t ecs_luajit_system_init(
         .entity = desc->entity,
         .query = desc->query,
         .run = s_system_run,
+        .ctx = desc->ctx,
         .binding_ctx = ecs_os_strdup(callback),
+        .ctx_free = desc->ctx_free,
         .binding_ctx_free = s_callback_free,
+        .interval = desc->interval,
+        .rate = desc->rate,
+        .tick_source = desc->tick_source,
         .multi_threaded = desc->multi_threaded,
         .no_readonly = desc->no_readonly,
     });
