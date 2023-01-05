@@ -25,3 +25,8 @@ function flecs.luajit.system_run(fn_name, iter)
         fn(iter)
     end end
 end
+
+function flecs.luajit.observer_callback(fn_name, iter)
+    local fn = _G[fn_name]
+    fn(ffi.cast('ecs_iter_t*', iter))
+end

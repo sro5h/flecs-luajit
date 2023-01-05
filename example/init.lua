@@ -60,4 +60,10 @@ function HelloAgain(iter)
     print('Hello again :p')
 end
 
+function OnSetPosition(iter)
+    for e in iter:each() do
+        print('Setting Position of ' .. iter:world():name(e))
+    end
+end
+
 print('init.lua executed')

@@ -30,6 +30,18 @@ typedef struct ecs_luajit_system_desc_t {
     bool no_readonly;
 } ecs_luajit_system_desc_t;
 
+typedef struct ecs_luajit_observer_desc_t {
+    ecs_entity_t entity;
+    ecs_filter_desc_t filter;
+    ecs_entity_t events[ECS_OBSERVER_DESC_EVENT_COUNT_MAX];
+    bool yield_existing;
+    char const* callback;
+    void* ctx;
+    ecs_ctx_free_t ctx_free;
+    ecs_poly_t* observable;
+    int32_t* last_event_id;
+} ecs_luajit_observer_desc_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,6 +59,11 @@ FLECS_LUAJIT_API
 ecs_entity_t ecs_luajit_system_init(
         ecs_world_t* world,
         ecs_luajit_system_desc_t const* desc);
+
+FLECS_LUAJIT_API
+ecs_entity_t ecs_luajit_observer_init(
+        ecs_world_t* world,
+        ecs_luajit_observer_desc_t const* desc);
 
 // TODO: FlecsLuajitConfig would be prettier but that won't work with the current
 // import function that just checks whether an entity already exists and not

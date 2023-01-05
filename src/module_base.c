@@ -16,6 +16,7 @@
 ECS_COMPONENT_DECLARE(EcsLuajitHost);
 
 static char const* s_key_system_run = "flecs.luajit.system_run";
+static char const* s_key_observer_callback = "flecs.luajit.observer_callback";
 
 static ECS_MOVE(EcsLuajitHost, dst, src, {
     ecs_luajit_host_fini(dst);
@@ -97,6 +98,8 @@ void s_init_registry_refs(
     lua_getfield(l, -1, "luajit");
     lua_getfield(l, -1, "system_run");
     lua_setfield(l, LUA_REGISTRYINDEX, s_key_system_run);
+    lua_getfield(l, -1, "observer_callback");
+    lua_setfield(l, LUA_REGISTRYINDEX, s_key_observer_callback);
     lua_pop(l, 4);
 
     luaX_stack_guard_epilog(l, 0);
@@ -181,6 +184,9 @@ static void s_callback_free(
     ecs_os_free(callback);
 }
 
+// TODO: Should luajit systems also query for `EcsLuajitHost` to prevent
+//       simultaneous access to it? Can different systems be run at the same
+//       time?
 ecs_entity_t ecs_luajit_system_init(
         ecs_world_t* world,
         ecs_luajit_system_desc_t const* desc) {
@@ -211,6 +217,62 @@ ecs_entity_t ecs_luajit_system_init(
         .multi_threaded = desc->multi_threaded,
         .no_readonly = desc->no_readonly,
     });
+}
+
+static void s_observer_callback(
+        ecs_iter_t* iter) {
+    EcsLuajitHost const* host = ecs_singleton_get(iter->world, EcsLuajitHost);
+
+    lua_State* l = ecs_luajit_host_at(host, ecs_get_stage_id(iter->world));
+    char const* callback = iter->binding_ctx;
+
+    luaX_stack_guard_prolog(l);
+
+    lua_getfield(l, LUA_REGISTRYINDEX, s_key_observer_callback);
+    lua_pushstring(l, callback);
+    lua_pushlightuserdata(l, iter);
+
+    if (lua_pcall(l, 2, 0, 0)) {
+        ecs_err("run luajit observer %s: %s", callback, lua_tostring(l, -1));
+        lua_pop(l, 1);
+    }
+
+    luaX_stack_guard_epilog(l, 0);
+}
+
+ecs_entity_t ecs_luajit_observer_init(
+        ecs_world_t* world,
+        ecs_luajit_observer_desc_t const* desc) {
+    ecs_assert(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(desc != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    if (!desc->callback && !desc->entity) {
+        return 0;
+    }
+
+    char const* callback = desc->callback;
+
+    if (!callback) {
+        callback = ecs_get_name(world, desc->entity);
+    }
+
+    ecs_observer_desc_t tmp_desc = {
+        .entity = desc->entity,
+        .filter = desc->filter,
+        .yield_existing = desc->yield_existing,
+        .callback = s_observer_callback,
+        .ctx = desc->ctx,
+        .binding_ctx = ecs_os_strdup(callback),
+        .ctx_free = desc->ctx_free,
+        .binding_ctx_free = s_callback_free,
+        .observable = desc->observable,
+        .last_event_id = desc->last_event_id,
+    };
+
+    ecs_size_t const bytes = sizeof(*desc->events) * ECS_OBSERVER_DESC_EVENT_COUNT_MAX;
+    ecs_os_memcpy(tmp_desc.events, desc->events, bytes);
+
+    return ecs_observer_init(world, &tmp_desc);
 }
 
 void FlecsLuajitConfigImport(
