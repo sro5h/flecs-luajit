@@ -11,9 +11,13 @@ typedef struct ecs_luajit_host_t {
     int32_t count;
 } ecs_luajit_host_t;
 
+/**
+  If the `source` member is NULL, the script is assumed to be associated to a
+  file with file name `name`.
+ */
 typedef struct ecs_luajit_script_t {
+    char const* name;
     char const* source;
-    bool is_file;
 } ecs_luajit_script_t;
 
 typedef struct ecs_luajit_call_desc_t {

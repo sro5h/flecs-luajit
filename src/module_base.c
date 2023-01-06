@@ -54,7 +54,7 @@ static void s_init_module_flecs_luajit(
 
     ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
         .stage_id = stage_id,
-        .script = { g_flecs_file_cdef_lua },
+        .script = { .name = "@cdef.lua", .source = g_flecs_file_cdef_lua },
         .results = 1,
     });
     lua_setfield(l, -2, "cdef");
@@ -76,7 +76,7 @@ static void s_init_module_flecs(
 
     ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
         .stage_id = stage_id,
-        .script = { g_flecs_file_flecs_lua },
+        .script = { .name = "@flecs.lua", .source = g_flecs_file_flecs_lua },
         .results = 1,
     });
 
@@ -118,12 +118,12 @@ void ecs_luajit_init(
 
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
             .stage_id = i,
-            .script = { g_flecs_file_boot_lua },
+            .script = { .name = "@boot.lua", .source = g_flecs_file_boot_lua },
         });
 
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
             .stage_id = i,
-            .script = { g_flecs_file_glue_lua },
+            .script = { .name = "@glue.lua", .source = g_flecs_file_glue_lua },
         });
 
         s_init_registry_refs(host, i);

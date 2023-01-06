@@ -4,6 +4,8 @@ local ffi = require 'ffi'
 flecs.luajit = require 'flecs.luajit'
 flecs:init({ cdef = flecs.luajit.cdef, world = flecs.luajit.world })
 
+if
+
 if flecs.luajit.stage_id == 0 then
     function flecs.luajit.once(fn)
         fn()

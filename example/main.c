@@ -10,7 +10,7 @@ int main(void) {
     ecs_luajit_init(world);
 
     ecs_luajit_run(world, &(ecs_luajit_run_desc_t) {
-        .script = { "example/init.lua", .is_file = true },
+        .script = { .name = "example/init.lua" },
     });
 
     ecs_luajit_system_init(world, &(ecs_luajit_system_desc_t) {

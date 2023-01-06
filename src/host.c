@@ -58,15 +58,20 @@ bool ecs_luajit_host_call(
     ecs_assert(self != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_assert(desc != NULL, ECS_INVALID_PARAMETER, NULL);
 
+    if (!desc->script.name && !desc->script.source) {
+        return false;
+    }
+
     lua_State* l = ecs_luajit_host_at(self, desc->stage_id);
     luaX_stack_guard_prolog(l);
 
     int load_result = 0;
 
-    if (desc->script.is_file) {
-        load_result = luaL_loadfile(l, desc->script.source);
+    if (desc->script.name && !desc->script.source) {
+        load_result = luaL_loadfile(l, desc->script.name);
     } else {
-        load_result = luaL_loadstring(l, desc->script.source);
+        size_t const size = strlen(desc->script.source);
+        load_result = luaL_loadbuffer(l, desc->script.source, size, desc->script.name);
     }
 
     if (load_result) {
