@@ -1,12 +1,7 @@
-- Add init function with config parameter that calls on_load only once
 - Use `ecs_enable_id` to enable and disable `(Loaded, Loadable)` pair instead
   of adding and removing it
-- Add c function to generate a c definition string for meta components and use
-  it in `ffi.cdef` to register it with lua states
-- Could also execute this register function automatically and register nested
-  types recursively
-- Add more elaborate example actually creating and using entities and components
-- Use plecs in example to define an `EcsLuajitSystem` (and the entities and
-  components)
-- Add lua function to automatically register (all) entities with a name into a
-  given table
+- Add `EcsLuajitCDef` tag to indicate that a meta struct should be automatically
+  registered in the lua states
+- Use plecs module in example to define an `EcsLuajitSystem` (and the entities
+  and components)
+- Stop initialisation if any of the internal scripts (i.e. boot.lua etc.) fail
