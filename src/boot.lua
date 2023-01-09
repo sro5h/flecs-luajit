@@ -21,7 +21,8 @@ function flecs.luajit.system_run(fn_name, iter)
 
     if clib.ecs_ext_iter_term_count(iter) == 0 then
         fn(iter)
-    else while clib.ecs_iter_next(iter) do
+        iter:fini()
+    else while iter:next() do
         fn(iter)
     end end
 end

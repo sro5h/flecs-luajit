@@ -12,6 +12,7 @@ typedef uintptr_t ecs_os_thread_t;
 typedef uintptr_t ecs_os_cond_t;
 typedef uintptr_t ecs_os_mutex_t;
 typedef uintptr_t ecs_os_dl_t;
+typedef uint64_t ecs_os_thread_id_t;
 struct ecs_os_api_t {
     void (* init_)(void);
     void (* fini_)(void);
@@ -22,6 +23,7 @@ struct ecs_os_api_t {
     char * (* strdup_)(const char *);
     ecs_os_thread_t (* thread_new_)(void * (*)(void *), void *);
     void * (* thread_join_)(ecs_os_thread_t);
+    ecs_os_thread_id_t (* thread_self_)(void);
     int32_t (* ainc_)(int32_t *);
     int32_t (* adec_)(int32_t *);
     int64_t (* lainc_)(int64_t *);
@@ -76,9 +78,11 @@ struct ecs_filter_t {
     bool _owned;
     bool _terms_owned;
     ecs_flags32_t _flags;
-    char * _name;
     char * _variable_names [1];
+    ecs_entity_t _entity;
+    struct ecs_world_t * _world;
     struct ecs_iterable_t _iterable;
+    void (* _dtor)(ecs_poly_t *);
 };
 struct ecs_table_cache_iter_t {
     struct ecs_table_cache_hdr_t * cur;
@@ -205,6 +209,7 @@ struct ecs_iter_private_t {
         struct ecs_page_iter_t page;
         struct ecs_worker_iter_t worker;
     } iter;
+    void * entity_iter;
     struct ecs_iter_cache_t cache;
 };
 struct ecs_iter_t {
@@ -300,7 +305,7 @@ struct ecs_filter_desc_t {
     bool instanced;
     ecs_flags32_t flags;
     const char * expr;
-    const char * name;
+    ecs_entity_t entity;
 };
 typedef struct ecs_filter_desc_t ecs_filter_desc_t;
 struct ecs_query_desc_t {
@@ -316,7 +321,6 @@ struct ecs_query_desc_t {
     void * group_by_ctx;
     void (* group_by_ctx_free)(void *);
     struct ecs_query_t * parent;
-    ecs_entity_t entity;
 };
 typedef struct ecs_query_desc_t ecs_query_desc_t;
 extern const ecs_entity_t FLECS__EEcsComponent;
@@ -435,7 +439,7 @@ ecs_entity_t ecs_get_scope(struct ecs_world_t const *);
 ecs_entity_t ecs_set_with(struct ecs_world_t *, ecs_id_t);
 ecs_id_t ecs_get_with(struct ecs_world_t const *);
 const char * ecs_set_name_prefix(struct ecs_world_t *, const char *);
-struct ecs_filter_t * ecs_filter_init(struct ecs_world_t const *, struct ecs_filter_desc_t const *);
+struct ecs_filter_t * ecs_filter_init(struct ecs_world_t *, struct ecs_filter_desc_t const *);
 void ecs_filter_fini(struct ecs_filter_t *);
 int32_t ecs_filter_find_this_var(struct ecs_filter_t const *);
 struct ecs_iter_t ecs_filter_iter(struct ecs_world_t const *, struct ecs_filter_t const *);
@@ -447,6 +451,7 @@ bool ecs_query_orphaned(struct ecs_query_t *);
 bool ecs_iter_is_true(struct ecs_iter_t *);
 ecs_entity_t ecs_iter_first(struct ecs_iter_t *);
 bool ecs_iter_next(struct ecs_iter_t *);
+void ecs_iter_fini(struct ecs_iter_t *);
 void * ecs_field_w_size(struct ecs_iter_t const *, int, int32_t);
 bool ecs_field_is_readonly(struct ecs_iter_t const *, int32_t);
 bool ecs_field_is_writeonly(struct ecs_iter_t const *, int32_t);
