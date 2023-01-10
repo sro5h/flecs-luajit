@@ -19,15 +19,13 @@ gen_srcs = custom_target(
   'resource-headers',
   input: [
     flecs_luajit_binding_srcs,
-    'src/boot.lua',
     'src/cdef.lua',
-    'src/glue.lua',
+    'src/module_base.lua',
   ],
   output: [
     'flecs.lua.h',
-    'boot.lua.h',
     'cdef.lua.h',
-    'glue.lua.h',
+    'module_base.lua.h',
   ],
   command: [
     generate_file_header,

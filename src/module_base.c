@@ -2,9 +2,8 @@
 #include "../include/flecs-luajit/lua_ext.h"
 
 #include "res/flecs.lua.h"
-#include "res/boot.lua.h"
 #include "res/cdef.lua.h"
-#include "res/glue.lua.h"
+#include "res/module_base.lua.h"
 
 #include <lualib.h>
 #include <lauxlib.h>
@@ -118,12 +117,21 @@ void ecs_luajit_init(
 
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
             .stage_id = i,
-            .script = { .name = "@boot.lua", .source = g_flecs_file_boot_lua },
+            .script = {
+                .name = "@module_base.lua",
+                .source = g_flecs_file_module_base_lua
+            },
         });
 
         ecs_luajit_host_call(host, &(ecs_luajit_call_desc_t) {
             .stage_id = i,
-            .script = { .name = "@glue.lua", .source = g_flecs_file_glue_lua },
+            .script = {
+                .name = "@bind_metatypes.lua",
+                .source =
+                    "local flecs = require 'flecs'\n"
+                    "flecs:bind_metatypes()\n"
+                ,
+            },
         });
 
         s_init_registry_refs(host, i);
