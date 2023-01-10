@@ -561,6 +561,9 @@ struct ecs_struct_desc_t {
 typedef struct ecs_struct_desc_t ecs_struct_desc_t;
 ecs_entity_t ecs_struct_init(struct ecs_world_t *, struct ecs_struct_desc_t const *);
 /* }}} */
+/* Symbols from external/flecs/flecs.h {{{ */
+struct ecs_query_t * ecs_system_get_query(struct ecs_world_t const *, ecs_entity_t);
+/* }}} */
 /* Symbols from include/flecs-luajit/module_base.h {{{ */
 struct ecs_luajit_system_desc_t {
     ecs_entity_t entity;
@@ -591,7 +594,6 @@ typedef struct ecs_luajit_observer_desc_t ecs_luajit_observer_desc_t;
 ecs_entity_t ecs_luajit_observer_init(struct ecs_world_t *, struct ecs_luajit_observer_desc_t const *);
 /* }}} */
 /* Symbols from include/flecs-luajit/flecs_ext.h {{{ */
-int32_t ecs_ext_iter_term_count(struct ecs_iter_t const *);
 int16_t ecs_ext_vector_offset(ecs_size_t);
 /* }}} */
 ]]

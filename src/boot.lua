@@ -18,8 +18,9 @@ local clib = ffi.C
 function flecs.luajit.system_run(fn_name, iter)
     local fn = _G[fn_name]
     iter = ffi.cast('ecs_iter_t*', iter)
+    local query = clib.ecs_system_get_query(iter:world(), iter:system())
 
-    if clib.ecs_ext_iter_term_count(iter) == 0 then
+    if query:filter():term_count() == 0 then
         fn(iter)
         iter:fini()
     else while iter:next() do
