@@ -4,9 +4,12 @@
             "path": "../include/flecs-luajit/module_base.h",
             "include_dirs": [ "../external/flecs" ],
             "symbols": [
-                { "name": "ecs_luajit_system_desc_t", "kind": "Typedef" },
                 { "name": "ecs_luajit_system_desc_t", "kind": "Default" },
-                { "name": "ecs_luajit_system_init", "kind": "Default" }
+                { "name": "ecs_luajit_system_desc_t", "kind": "Typedef" },
+                { "name": "ecs_luajit_system_init", "kind": "Default" },
+                { "name": "ecs_luajit_observer_desc_t", "kind": "Default" },
+                { "name": "ecs_luajit_observer_desc_t", "kind": "Typedef" },
+                { "name": "ecs_luajit_observer_init", "kind": "Default" }
             ]
         },
         {

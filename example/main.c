@@ -21,15 +21,6 @@ int main(void) {
         .query.filter.expr = "",
     });
 
-    ecs_luajit_observer_init(world, &(ecs_luajit_observer_desc_t) {
-        .entity = ecs_entity(world, {
-            .name = "OnSetPosition",
-        }),
-        .filter.expr = "Position",
-        .events = { EcsOnSet },
-        .yield_existing = true,
-    });
-
     ecs_progress(world, 0);
 
     return ecs_fini(world);

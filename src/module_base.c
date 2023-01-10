@@ -269,8 +269,9 @@ ecs_entity_t ecs_luajit_observer_init(
         .last_event_id = desc->last_event_id,
     };
 
-    ecs_size_t const bytes = sizeof(*desc->events) * ECS_OBSERVER_DESC_EVENT_COUNT_MAX;
-    ecs_os_memcpy(tmp_desc.events, desc->events, bytes);
+    for (int32_t i = 0; i < ECS_OBSERVER_DESC_EVENT_COUNT_MAX; ++ i) {
+        tmp_desc.events[i] = desc->events[i];
+    }
 
     return ecs_observer_init(world, &tmp_desc);
 }

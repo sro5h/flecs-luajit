@@ -3,8 +3,17 @@ local ffi = require 'ffi'
 
 local clib = ffi.C
 
+function flecs.World:observer(descOrNil)
+    local desc = descOrNil or {}
+    flecs.aux.fix_array(desc.events, 0)
+
+    return clib.ecs_luajit_observer_init(self, ffi.new('ecs_luajit_observer_desc_t', desc))
+end
+
 function flecs.World:system(descOrNil)
     local desc = descOrNil or {}
+    flecs.aux.fix_array(desc.query.filter.terms, {})
+
     return clib.ecs_luajit_system_init(self, ffi.new('ecs_luajit_system_desc_t', desc))
 end
 

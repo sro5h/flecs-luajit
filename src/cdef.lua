@@ -562,7 +562,6 @@ typedef struct ecs_struct_desc_t ecs_struct_desc_t;
 ecs_entity_t ecs_struct_init(struct ecs_world_t *, struct ecs_struct_desc_t const *);
 /* }}} */
 /* Symbols from include/flecs-luajit/module_base.h {{{ */
-typedef struct ecs_luajit_system_desc_t ecs_luajit_system_desc_t;
 struct ecs_luajit_system_desc_t {
     ecs_entity_t entity;
     struct ecs_query_desc_t query;
@@ -575,7 +574,21 @@ struct ecs_luajit_system_desc_t {
     bool multi_threaded;
     bool no_readonly;
 };
+typedef struct ecs_luajit_system_desc_t ecs_luajit_system_desc_t;
 ecs_entity_t ecs_luajit_system_init(struct ecs_world_t *, struct ecs_luajit_system_desc_t const *);
+struct ecs_luajit_observer_desc_t {
+    ecs_entity_t entity;
+    struct ecs_filter_desc_t filter;
+    ecs_entity_t events [8];
+    bool yield_existing;
+    const char * callback;
+    void * ctx;
+    void (* ctx_free)(void *);
+    ecs_poly_t * observable;
+    int32_t * last_event_id;
+};
+typedef struct ecs_luajit_observer_desc_t ecs_luajit_observer_desc_t;
+ecs_entity_t ecs_luajit_observer_init(struct ecs_world_t *, struct ecs_luajit_observer_desc_t const *);
 /* }}} */
 /* Symbols from include/flecs-luajit/flecs_ext.h {{{ */
 int32_t ecs_ext_iter_term_count(struct ecs_iter_t const *);

@@ -56,14 +56,25 @@ flecs.luajit.once(function()
     }
 end)
 
-function HelloAgain(iter)
-    print('Hello again :p')
-end
-
 function OnSetPosition(iter)
     for e in iter:each() do
         print('Setting Position of ' .. iter:world():name(e))
     end
+end
+
+flecs.luajit.once(function()
+    world:observer {
+        entity = world:entity {
+            name = 'OnSetPosition',
+        },
+        filter = { expr = 'Position' },
+        events = { flecs.g.OnSet },
+        yield_existing = true,
+    }
+end)
+
+function HelloAgain(iter)
+    print('Hello again :p')
 end
 
 print('init.lua executed')
