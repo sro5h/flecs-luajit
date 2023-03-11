@@ -67,6 +67,16 @@ Note that to make this example work with a multithreaded `ecs_world_t` one has
 to make some modifications to the Lua script. A more elaborate example can be
 found in the `example` directory.
 
+Compatibility
+-------------
+The following table shows the compatibility of different versions of
+`flecs-luajit` with those of `flecs`
+
+| flecs-luajit | flecs  |
+|--------------|--------|
+| master       | v3.1.3 |
+| v0.1.0       | v3.1.3 |
+
 Building
 --------
 For now only linux is supported but windows support will come shortly. The
